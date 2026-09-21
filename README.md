@@ -11,14 +11,14 @@ minimizzare il carico massimo di stazione.
 
 | Percorso | Contenuto |
 | --- | --- |
-| `alb/instance.py` | dati di un'istanza e I/O sul formato `.alb` |
-| `alb/graph.py` | chiusura e riduzione transitiva, order strength |
-| `alb/solution.py` | soluzione e validatore |
-| `alb/bounds.py` | lower bound e finestre di stazione |
-| `alb/generator.py` | generazione pseudo-casuale con order strength controllata |
-| `alb/models/` | i due modelli PLI, con interfaccia comune |
-| `alb/heuristic/` | regole di priorità, costruzione greedy, ricerca locale |
-| `alb/experiments/` | campagna sperimentale e scrittura dei risultati |
+| `src/instance.py` | dati di un'istanza e I/O sul formato `.alb` |
+| `src/graph.py` | chiusura e riduzione transitiva, order strength |
+| `src/solution.py` | soluzione e validatore |
+| `src/bounds.py` | lower bound e finestre di stazione |
+| `src/generator.py` | generazione pseudo-casuale con order strength controllata |
+| `src/models/` | i due modelli PLI, con interfaccia comune |
+| `src/heuristic/` | regole di priorità, costruzione greedy, ricerca locale |
+| `src/experiments/` | esperimenti e scrittura dei risultati |
 
 ## Installazione
 
