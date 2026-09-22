@@ -1,0 +1,8 @@
+pulp>=3.3
+highspy>=1.11
+networkx>=3.4
+numpy>=2.1
+pandas>=2.2
+matplotlib>=3.9
+tqdm>=4.66
+pytest>=8.3
