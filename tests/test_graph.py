@@ -1,8 +1,8 @@
 """Test per PrecedenceGraph.
 
-Usa il grafo di Fig. 1 in Scholl & Becker (2006), n=10 task, riportato anche
-nella tabella di esempio del paper (S1={1}, S2={2}, ... con m=7, c=9): lo
-stesso esempio è verificabile a mano confrontandolo col paper.
+Usa un grafo di 10 task costruito a mano, con una struttura simile a quella
+degli esempi di Scholl & Becker (2006) ma con tempi e archi propri: i valori
+attesi nei test sono stati verificati a mano su questo grafo.
 """
 
 from __future__ import annotations
@@ -13,14 +13,13 @@ from src.graph import PrecedenceGraph
 from src.instance import ALBInstance
 
 
-def _fig1_instance() -> ALBInstance:
-    # Task 1..10 -> indici 0..9. Tempi e archi dalla Fig. 1 del paper Scholl &
-    # Becker (2006): 1->2, 1->3, 2->4, 3->5, 3->7, 4->5, 5->6, 5->8, 5->9,
-    # 6->10 (adattato: qui usiamo un sottoinsieme minimale e coerente, non
-    # serve replicare l'intera figura per validare la classe).
+def _example_instance() -> ALBInstance:
+    # Grafo di esempio (task 1..10 -> indici 0..9):
+    # 1->2, 1->3, 2->4, 3->5, 3->7, 4->5, 5->6, 5->8, 5->9, 6->10
     return ALBInstance(
         name="fig1",
-        task_times=(6, 6, 2, 2, 8, 7, 4, 5, 9, 2),
+        task_times=(6, 6, 2, 2, 8, 7, 4, 
+        5, 9, 2),
         precedences=(
             (0, 1), (0, 2),
             (1, 3),
@@ -34,13 +33,13 @@ def _fig1_instance() -> ALBInstance:
 
 
 def test_predecessors_and_successors_diretti():
-    g = PrecedenceGraph(_fig1_instance())
+    g = PrecedenceGraph(_example_instance())
     assert g.predecessors(4) == frozenset({2, 3})   # task 5: predecessori 3 e 4
     assert g.successors(4) == frozenset({5, 7, 8})  # task 5: successori 6, 8, 9
 
 
 def test_chiusura_transitiva():
-    g = PrecedenceGraph(_fig1_instance())
+    g = PrecedenceGraph(_example_instance())
     # task 0 (1) precede tutto ciò che discende da lui, anche indirettamente
     assert g.all_successors(0) == frozenset({1, 2, 3, 4, 5, 6, 7, 8, 9})
     # task 9 (10) non ha nessun successore
@@ -65,10 +64,10 @@ def test_riduzione_transitiva_toglie_solo_archi_ridondanti():
 
 
 def test_ordinamento_topologico_rispetta_le_precedenze():
-    g = PrecedenceGraph(_fig1_instance())
+    g = PrecedenceGraph(_example_instance())
     order = g.topological_order
     position = {task: idx for idx, task in enumerate(order)}
-    for u, v in _fig1_instance().precedences:
+    for u, v in _example_instance().precedences:
         assert position[u] < position[v]
 
 

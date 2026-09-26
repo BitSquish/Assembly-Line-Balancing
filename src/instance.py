@@ -222,6 +222,9 @@ class ALBInstance:
                 raise ValueError(
                     f"{p.name}: indice operazione {idx + 1} fuori dal range 1..{n}"
                 )
+            if times[idx] is not None:
+                raise ValueError(f"{p.name}: tempo duplicato per l'operazione {idx + 1}")
+            
             times[idx] = int(fields[1])
 
         if missing := [i + 1 for i, t in enumerate(times) if t is None]:
@@ -253,7 +256,8 @@ class ALBInstance:
 
         meta: dict = {"source_file": str(p)}
         if sections.get("order strength"):
-            meta["order_strength"] = float(sections["order strength"][0])
+            # I file del dataset Otto et al. (2013) usano la virgola decimale ("0,268").
+            meta["order_strength"] = float(sections["order strength"][0].replace(",", "."))
 
         return cls(
             name=name or p.stem,

@@ -13,8 +13,10 @@ e servono a valle di questo modulo:
     - riduzione transitiva -> elimina archi ridondanti nei vincoli di
       precedenza dei modelli PLI (un arco deducibile da altri due non va
       duplicato come vincolo);
-    - order strength       -> misura di densità del grafo usata sia per
-      classificare le istanze generate sia scritta nel file .alb da ALBInstance.save().
+    - order strength       -> misura di densità del grafo usata per classificare
+      le istanze generate. ALBInstance.save() la scrive nel file .alb solo se è
+      presente in instance.meta["order_strength"]: è compito del generatore
+      calcolarla qui e inserirla in meta.
 """
 
 from __future__ import annotations
