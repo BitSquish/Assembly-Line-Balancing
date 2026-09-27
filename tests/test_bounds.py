@@ -8,7 +8,7 @@ from src.bounds import StationBounds, greedy_solution, lower_bound, simple_lower
 from src.graph import PrecedenceGraph
 from src.instance import ALBInstance
 from src.solution import is_feasible
-from tests._brute import brute_force_optimum
+from tests.test_brute import brute_force_optimum
 
 
 def _random_instance(seed: int, n: int = 7, m: int = 3, p: float = 0.3) -> ALBInstance:
