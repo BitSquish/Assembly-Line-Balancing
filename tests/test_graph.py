@@ -17,7 +17,7 @@ def _example_instance() -> ALBInstance:
     # Grafo di esempio (task 1..10 -> indici 0..9):
     # 1->2, 1->3, 2->4, 3->5, 3->7, 4->5, 5->6, 5->8, 5->9, 6->10
     return ALBInstance(
-        name="fig1",
+        name="esempio",
         task_times=(6, 6, 2, 2, 8, 7, 4, 
         5, 9, 2),
         precedences=(

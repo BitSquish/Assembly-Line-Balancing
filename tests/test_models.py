@@ -6,7 +6,7 @@ import pytest
 
 from src.models import NaiveModel, RittCostaModel
 from src.solution import Status, is_feasible
-from tests.test_brute import brute_force_optimum
+from tests.helpers import brute_force_optimum
 from tests.test_bounds import _random_instance
 
 

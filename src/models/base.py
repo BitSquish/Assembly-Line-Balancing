@@ -22,7 +22,7 @@ class PLIModel:
     def solve(self, time_limit: float, *, msg: bool = False) -> SolveResult:
         """Risolve con HiGHS entro time_limit secondi e restituisce l'esito."""
         t0 = time.perf_counter()
-        prob = getattr(self, "prob", None) or self.build()
+        prob = self.prob if getattr(self, "prob", None) is not None else self.build()
         prob.solve(pulp.HiGHS(msg=msg, timeLimit=time_limit))
         elapsed = time.perf_counter() - t0
 
@@ -82,3 +82,6 @@ class PLIModel:
             if (var.varValue or 0.0) > 0.5:
                 stations[i] = s
         return Solution(self.instance, tuple(stations))
+
+    def build(self) -> pulp.LpProblem:
+        raise NotImplementedError(f"{type(self).__name__} deve definire build()")
