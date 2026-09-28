@@ -1,2 +1,14 @@
-.venv/
+# File del solver e log
+*.mps
+*.log
+
+# Python cache e virtual environment
 __pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Istanze e risultati 
+*.alb
+results/

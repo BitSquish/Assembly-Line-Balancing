@@ -81,7 +81,7 @@ class Status(Enum):
     FEASIBLE = "feasible"        # time limit scaduto, con incumbent
     NO_SOLUTION = "no_solution"  # time limit scaduto, senza incumbent
     INFEASIBLE = "infeasible"    # il modello non ha soluzione (non dovrebbe capitare)
-
+    SOLVER_ERROR = "solver_error"  # il solver ha rilevato un proprio errore interno
 
 @dataclass(frozen=True, slots=True, repr=False)
 class SolveResult:

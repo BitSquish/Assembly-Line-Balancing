@@ -20,17 +20,18 @@ class PLIModel:
     name: str
 
     def solve(self, time_limit: float, *, msg: bool = False) -> SolveResult:
-        """Risolve con HiGHS entro time_limit secondi e restituisce l'esito."""
         t0 = time.perf_counter()
         prob = self.prob if getattr(self, "prob", None) is not None else self.build()
-        prob.solve(pulp.HiGHS(msg=msg, timeLimit=time_limit))
-        elapsed = time.perf_counter() - t0
-
+        
+        # Disattiviamo il presolve a monte per evitare i bug di HiGHS 1.15.1
+        prob.solve(pulp.HiGHS(msg=msg, timeLimit=time_limit, presolve="off"))
         status, dual_bound = self._read_status(prob)
+
+        elapsed = time.perf_counter() - t0
 
         solution = self._extract_solution() if status in (Status.OPTIMAL, Status.FEASIBLE) else None
         if solution is not None and (errs := violations(solution)):
-            raise RuntimeError(f"{self.instance.name}: soluzione PLI non ammissibile: {errs[:5]}")
+            raise RuntimeError(f"{self.instance.name}: soluzione inammissibile: {errs[:5]}")
 
         lb = getattr(self, "c_min", 0)
         if dual_bound is not None and math.isfinite(dual_bound):
@@ -55,7 +56,7 @@ class PLIModel:
                 "n_constraints": prob.numConstraints(),
             },
         )
-
+    
     def _read_status(self, prob: pulp.LpProblem) -> tuple[Status, float | None]:
         h = getattr(prob, "solverModel", None)
         if h is None:
@@ -67,8 +68,10 @@ class PLIModel:
         model_status = h.getModelStatus()
         info = h.getInfo()
         has_solution = info.primal_solution_status == 2
-        
-        if model_status == highspy.HighsModelStatus.kOptimal:
+
+        if model_status == highspy.HighsModelStatus.kSolveError:
+            return Status.SOLVER_ERROR, None
+        elif model_status == highspy.HighsModelStatus.kOptimal:
             return Status.OPTIMAL, info.mip_dual_bound
         elif model_status == highspy.HighsModelStatus.kInfeasible:
             return Status.INFEASIBLE, info.mip_dual_bound
