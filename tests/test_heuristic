@@ -1,8 +1,8 @@
-"""Test per l'euristica RPW di riferimento."""
+"""Test per le euristiche: RPW (riferimento) e saturazione delle stazioni."""
 
 from __future__ import annotations
 
-from src.heuristic import rpw
+from src.heuristic import rpw, saturation
 from src.instance import ALBInstance
 from src.solution import Status, is_feasible
 from tests.helpers import brute_force_optimum, random_instance
@@ -37,3 +37,25 @@ def test_ammissibile_e_mai_sotto_ottimo_o_lower_bound():
             assert res.lower_bound <= brute_force_optimum(inst) <= res.objective
             if res.status is Status.OPTIMAL:
                 assert res.objective == brute_force_optimum(inst)
+
+
+# ------------------------------------------------------------- saturazione
+
+
+def test_saturazione_esempio_arriva_all_ottimo():
+    # L'ottimo dell'esempio è 18 (forza bruta); RPW si ferma a 19.
+    res = saturation.solve(_esempio())
+    assert res.objective == 18
+    assert is_feasible(res.solution)
+
+
+def test_saturazione_ammissibile_e_mai_sotto_ottimo():
+    for seed in range(40):
+        for m, p in ((2, 0.2), (3, 0.3), (4, 0.5)):
+            inst = random_instance(seed, n=7, m=m, p=p)
+            res = saturation.solve(inst)
+            opt = brute_force_optimum(inst)
+            assert is_feasible(res.solution)
+            assert res.lower_bound <= opt <= res.objective
+            if res.status is Status.OPTIMAL:
+                assert res.objective == opt
