@@ -1,4 +1,4 @@
-"""Euristica di saturazione delle stazioni per il SALBP-2.
+"""Euristica di Hoffmann (saturazione delle stazioni) per il SALBP-2.
 
 L'euristica cerca il più piccolo tempo ciclo c per cui le m stazioni riescono a
 contenere tutte le operazioni, costruendo le stazioni una alla volta e
@@ -19,20 +19,28 @@ precedenza: l'insieme scelto deve essere chiuso rispetto alle precedenze
 Viene risolto con una ricerca in profondità sugli insiemi ammissibili, con
 memoria degli insiemi già visitati. Per contenere i tempi sulle istanze grandi
 la ricerca ha un limite di nodi (node_limit): oltre il limite si usa il miglior
-insieme trovato fino a quel momento.
+insieme trovato fino a quel momento. A parità di carico si tiene il primo
+insieme trovato; la ricerca esplora per prime le operazioni più lunghe.
 
-Rispetto all'euristica di riferimento RPW (rpw.py), il ciclo esterno sul tempo
-ciclo è lo stesso; cambia il criterio con cui si riempie ogni stazione:
-RPW sceglie un'operazione alla volta secondo il peso posizionale, questa
-euristica sceglie l'intero contenuto della stazione in modo da non lasciare
-tempo inutilizzato.
+Origine e letteratura:
+    L'idea di saturare ogni stazione è nata nello sviluppo di questo progetto,
+    come evoluzione di due euristiche precedenti (per layer del grafo delle
+    precedenze e per gruppi di operazioni). Una verifica sulla letteratura ha
+    mostrato che il criterio coincide con l'euristica di Hoffmann:
 
-Contesto in letteratura: le procedure che costruiscono una stazione alla volta
-(station-oriented) e il criterio di massimo carico di stazione sono discussi in
-Scholl, A., & Becker, C. (2006). State-of-the-art exact and heuristic solution
-procedures for simple assembly line balancing. European Journal of Operational
-Research, 168(3), 666-693, sez. 5; la ricerca sul tempo ciclo a partire dal
-lower bound nella sez. 4.2.1.
+        Hoffmann, T. R. (1963). Assembly line balancing with a precedence
+            matrix. Management Science.
+
+    descritta in Scholl, A., & Becker, C. (2006). State-of-the-art exact and
+    heuristic solution procedures for simple assembly line balancing. European
+    Journal of Operational Research, 168(3), 666-693, sez. 5.1.2. L'adattamento
+    al SALBP-2 tramite ricerca sul tempo ciclo a partire dal lower bound segue
+    lo schema delle sez. 4.2.1 e 5.1.3 dello stesso articolo.
+
+    Si sono provati anche criteri di scelta a parità di carico (peso
+    posizionale, lavoro sbloccato, operazioni lunghe, rinvio delle foglie come
+    riempitivi): nessuno ha migliorato in modo significativo la versione qui
+    implementata, a fronte di tempi di calcolo circa cento volte maggiori.
 """
 
 from __future__ import annotations
@@ -129,7 +137,7 @@ def solve(
     *,
     node_limit: int = 20_000,
 ) -> SolveResult:
-    """Euristica di saturazione con ricerca del tempo ciclo dal lower bound."""
+    """Euristica di Hoffmann con ricerca del tempo ciclo dal lower bound."""
     t0 = time.perf_counter()
     graph = graph or PrecedenceGraph(instance)
     lb = lower_bound(instance, graph)
@@ -146,7 +154,7 @@ def solve(
 
     objective = solution.max_load
     return SolveResult(
-        method="saturazione",
+        method="hoffmann",
         instance_name=instance.name,
         status=Status.OPTIMAL if objective == lb else Status.FEASIBLE,
         objective=objective,

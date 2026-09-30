@@ -1,9 +1,9 @@
 """Euristiche per il SALBP-2, con la stessa interfaccia dei PLI: solve(...) -> SolveResult.
 
-- rpw: euristica di riferimento (peso posizionale, Helgeson & Birnie 1961);
-- saturation: euristica di saturazione delle stazioni.
+- groups:   euristica dei gruppi, sviluppata nel progetto;
+- hoffmann: euristica di Hoffmann (1963), riferimento dalla letteratura.
 """
 
-from . import rpw, saturation
+from . import groups, hoffmann
 
-__all__ = ["rpw", "saturation"]
+__all__ = ["groups", "hoffmann"]
