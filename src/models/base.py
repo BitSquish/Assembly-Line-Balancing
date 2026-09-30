@@ -23,8 +23,12 @@ class PLIModel:
         t0 = time.perf_counter()
         prob = self.prob if getattr(self, "prob", None) is not None else self.build()
         
-        # Disattiviamo il presolve a monte per evitare i bug di HiGHS 1.15.1
-        prob.solve(pulp.HiGHS(msg=msg, timeLimit=time_limit, presolve="off"))
+        # MIPGapAbs < 1: l'ottimo è intero, quindi quando la distanza tra
+        # soluzione e bound scende sotto 1 l'ottimo è dimostrato. Con la sola
+        # tolleranza relativa di default (1e-4), su valori oltre 10 000 Gurobi
+        # potrebbe fermarsi prima di averlo dimostrato.
+        prob.solve(pulp.GUROBI(msg=msg, timeLimit=time_limit, MIPGapAbs=0.999))
+        elapsed = time.perf_counter() - t0
         status, dual_bound = self._read_status(prob)
 
         elapsed = time.perf_counter() - t0
@@ -38,8 +42,10 @@ class PLIModel:
             lb = max(lb, math.ceil(dual_bound - 1e-6))
         
         objective = solution.max_load if solution else None
-        if status is Status.OPTIMAL and objective is not None:
-            lb = objective
+        
+        # "Ottimo" solo se il bound lo dimostra davvero: vale per qualsiasi solver.
+        if status is Status.OPTIMAL and objective is not None and objective > lb:
+            status = Status.FEASIBLE
 
         return SolveResult(
             method=self.name,
@@ -58,26 +64,29 @@ class PLIModel:
         )
     
     def _read_status(self, prob: pulp.LpProblem) -> tuple[Status, float | None]:
-        h = getattr(prob, "solverModel", None)
-        if h is None:
+        m = getattr(prob, "solverModel", None)   # il gurobipy.Model creato da PuLP
+        if m is None:
             if prob.status == pulp.LpStatusOptimal: return Status.OPTIMAL, None
             if prob.status == pulp.LpStatusInfeasible: return Status.INFEASIBLE, None
             return Status.NO_SOLUTION, None
 
-        import highspy
-        model_status = h.getModelStatus()
-        info = h.getInfo()
-        has_solution = info.primal_solution_status == 2
+        import gurobipy
+        from gurobipy import GRB
 
-        if model_status == highspy.HighsModelStatus.kSolveError:
+        try:
+            bound = m.ObjBound                   # bound duale del branch and bound
+        except (AttributeError, gurobipy.GurobiError):
+            bound = None
+
+        if m.Status == GRB.OPTIMAL:
+            return Status.OPTIMAL, bound
+        if m.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):
+            return Status.INFEASIBLE, None
+        if m.Status == GRB.NUMERIC:
             return Status.SOLVER_ERROR, None
-        elif model_status == highspy.HighsModelStatus.kOptimal:
-            return Status.OPTIMAL, info.mip_dual_bound
-        elif model_status == highspy.HighsModelStatus.kInfeasible:
-            return Status.INFEASIBLE, info.mip_dual_bound
-        elif has_solution:
-            return Status.FEASIBLE, info.mip_dual_bound
-        return Status.NO_SOLUTION, info.mip_dual_bound
+        if m.SolCount > 0:                       # time limit con incumbent
+            return Status.FEASIBLE, bound
+        return Status.NO_SOLUTION, bound
 
     def _extract_solution(self) -> Solution:
         stations = [0] * self.instance.n_tasks
