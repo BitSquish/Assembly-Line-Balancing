@@ -1,0 +1,17 @@
+{
+  "description": "Disegno sperimentale: dimensione x densità x task per stazione x distribuzione dei tempi.",
+  "base_seed": 2026,
+  "instances_per_group": 10,
+  "t_min": 1,
+  "t_max": 100,
+  "factors": {
+    "n": [30, 100],
+    "order_strength": [0.2, 0.6],
+    "tasks_per_station": [4, 8],
+    "time_dist": ["uniform"]
+  },
+  "extra_groups": [
+    {"n": 30, "order_strength": 0.2, "tasks_per_station": 4, "time_dist": "bimodal"},
+    {"n": 30, "order_strength": 0.6, "tasks_per_station": 4, "time_dist": "bimodal"}
+  ]
+}
