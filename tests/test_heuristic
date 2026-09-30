@@ -1,0 +1,39 @@
+"""Test per l'euristica RPW di riferimento."""
+
+from __future__ import annotations
+
+from src.heuristic import rpw
+from src.instance import ALBInstance
+from src.solution import Status, is_feasible
+from tests.helpers import brute_force_optimum, random_instance
+
+
+def _esempio() -> ALBInstance:
+    # L'esempio "su carta" (task 1..10 -> indici 0..9), m = 3.
+    return ALBInstance(
+        "esempio",
+        (4, 8, 7, 4, 7, 1, 7, 5, 5, 2),
+        ((0, 2), (1, 6), (2, 5), (2, 6), (2, 8), (3, 7), (3, 8), (4, 9), (6, 7), (6, 9)),
+        m_stations=3,
+    )
+
+
+def test_esempio_verificato_a_mano():
+    # Con c = 17 e 18 il riempimento RPW richiede 4 stazioni; con c = 19 basta:
+    # S1 = {1, 2, 3}, S2 = {4, 5, 6, 7}, S3 = {8, 9, 10}, carichi 19, 19, 12.
+    res = rpw.solve(_esempio())
+    assert res.solution.stations == (1, 1, 1, 2, 2, 2, 2, 3, 3, 3)
+    assert res.objective == 19
+    assert res.lower_bound == 17
+    assert res.status is Status.FEASIBLE        # l'ottimo è 18: RPW non lo trova
+
+
+def test_ammissibile_e_mai_sotto_ottimo_o_lower_bound():
+    for seed in range(40):
+        for m, p in ((2, 0.2), (3, 0.3), (4, 0.5)):
+            inst = random_instance(seed, n=7, m=m, p=p)
+            res = rpw.solve(inst)
+            assert is_feasible(res.solution)
+            assert res.lower_bound <= brute_force_optimum(inst) <= res.objective
+            if res.status is Status.OPTIMAL:
+                assert res.objective == brute_force_optimum(inst)
