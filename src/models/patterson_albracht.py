@@ -23,37 +23,12 @@ Modello più compatto, rilassamento più debole.
 from __future__ import annotations
 
 import pulp
-
-from ..bounds import StationBounds, greedy_solution, lower_bound
-from ..graph import PrecedenceGraph
-from ..instance import ALBInstance
 from .base import PLIModel
 
 
 class PattersonAlbrachtModel(PLIModel):
 
     name = "patterson_albracht"
-
-    def __init__(
-        self,
-        instance: ALBInstance,
-        graph: PrecedenceGraph | None = None,
-        *,
-        upper_bound: int | None = None,
-    ) -> None:
-        self.instance = instance
-        self.graph = graph or PrecedenceGraph(instance)
-        self.sb = StationBounds.from_graph(self.graph)
-
-        ub = greedy_solution(instance, self.graph).max_load
-        if upper_bound is not None:
-            ub = min(ub, upper_bound)
-        self.c_max = ub
-        self.c_min = lower_bound(instance, self.graph, upper_bound=ub)
-
-        self.prob: pulp.LpProblem | None = None
-        self.x: dict[tuple[int, int], pulp.LpVariable] = {}
-        self.c: pulp.LpVariable | None = None
 
     def build(self) -> pulp.LpProblem:
         inst, sb = self.instance, self.sb

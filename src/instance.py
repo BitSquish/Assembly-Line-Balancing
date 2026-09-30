@@ -59,8 +59,10 @@ class ALBInstance:
         task_times:   tempo di ogni operazione, indicizzato 0-based.
         precedences:  archi diretti (i, j), "i su una stazione di indice <= quella di j".
         m_stations:   numero di stazioni. Dato di input nel SALBP-2.
-        cycle_time:   presente nelle istanze SALBP-1 e nei file benchmark, dove è
-                      il dato e il numero di stazioni è l'incognita. None altrimenti.
+                cycle_time:   NON è l'obiettivo del SALBP-2. È il tempo ciclo letto dai
+                      file benchmark SALBP-1, dove è un dato. Nel nostro problema
+                      il tempo ciclo è il carico massimo di stazione, e si trova
+                      in Solution. None se il file non lo riporta.
         meta:         parametri del generatore (seed, order strength, distribuzione).
     """
 
@@ -151,7 +153,7 @@ class ALBInstance:
     def save(self, path: str | Path) -> None:
         """Scrive l'istanza in formato .alb.
 
-        Emette sia <cycle time> (quando lo conosciamo) sia <number of stations>.
+        Emette sia <cycle time> sia <number of stations>.
         Il primo è il tag che gli strumenti di letteratura si aspettano, il secondo
         è il dato che serve al SALBP-2. Dato che entrambi i parser sono tolleranti,
         il file resta leggibile da tutte e due le parti.

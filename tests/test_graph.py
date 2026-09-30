@@ -18,8 +18,7 @@ def _example_instance() -> ALBInstance:
     # 1->2, 1->3, 2->4, 3->5, 3->7, 4->5, 5->6, 5->8, 5->9, 6->10
     return ALBInstance(
         name="esempio",
-        task_times=(6, 6, 2, 2, 8, 7, 4, 
-        5, 9, 2),
+        task_times=(6, 6, 2, 2, 8, 7, 4, 5, 9, 2),
         precedences=(
             (0, 1), (0, 2),
             (1, 3),
@@ -71,7 +70,7 @@ def test_ordinamento_topologico_rispetta_le_precedenze():
         assert position[u] < position[v]
 
 
-def test_order_strength_grafo_completo_vale_1():
+def test_order_strength_catena_vale_1():
     # catena 0->1->2->3: ogni coppia è ordinata, OS deve valere 1.0
     inst = ALBInstance(
         name="catena",

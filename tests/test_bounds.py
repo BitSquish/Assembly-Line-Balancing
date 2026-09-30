@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-import random
-
 from src.bounds import StationBounds, greedy_solution, lower_bound, simple_lower_bound
 from src.graph import PrecedenceGraph
 from src.instance import ALBInstance
 from src.solution import is_feasible
-from tests.helpers import brute_force_optimum
+from tests.helpers import brute_force_optimum, random_instance
 
-
-def _random_instance(seed: int, n: int = 7, m: int = 3, p: float = 0.3) -> ALBInstance:
-    rng = random.Random(seed)
-    times = [rng.randint(1, 10) for _ in range(n)]
-    prec = [(u, v) for u in range(n) for v in range(u + 1, n) if rng.random() < p]
-    return ALBInstance(f"rnd{seed}", times, prec, m_stations=m)
 
 
 def test_simple_lower_bound_esempio_a_mano():
@@ -39,7 +31,7 @@ def test_finestre_su_catena():
 
 def test_bound_validi_su_istanze_casuali():
     for seed in range(40):
-        inst = _random_instance(seed)
+        inst = random_instance(seed)
         g = PrecedenceGraph(inst)
         opt = brute_force_optimum(inst)
         greedy = greedy_solution(inst, g)

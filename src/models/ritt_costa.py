@@ -1,6 +1,6 @@
 """Modello PLI per il SALBP-2 con finestre di stazione dipendenti dal tempo ciclo.
 
-Riferimento: Ritt & Costa, "Improved integer programming models for simple assembly line balancing and related
+Riferimento: Ritt & Costa (2018), "Improved integer programming models for simple assembly line balancing and related
 problems", formulazione con variabili di tempo ciclo r_t e tagli dinamici sulle finestre di stazione.
 
 Notazione (stazioni 1..m, task 0-based):
@@ -29,10 +29,6 @@ somme le omettono semplicemente.
 from __future__ import annotations
 
 import pulp
-
-from ..bounds import StationBounds, greedy_solution, lower_bound
-from ..graph import PrecedenceGraph
-from ..instance import ALBInstance
 from .base import PLIModel
 
 
@@ -40,27 +36,9 @@ class RittCostaModel(PLIModel):
     
     name = "ritt_costa"
 
-    def __init__(
-        self,
-        instance: ALBInstance,
-        graph: PrecedenceGraph | None = None,
-        *,
-        upper_bound: int | None = None,
-    ) -> None:
-        self.instance = instance
-        self.graph = graph or PrecedenceGraph(instance)
-        self.sb = StationBounds.from_graph(self.graph)
-
-        ub = greedy_solution(instance, self.graph).max_load
-        if upper_bound is not None:
-            ub = min(ub, upper_bound)
-        self.c_max = ub
-        self.c_min = lower_bound(instance, self.graph, upper_bound=ub)
-
-        self.prob: pulp.LpProblem | None = None
-        self.x: dict[tuple[int, int], pulp.LpVariable] = {}
+    def __init__(self, instance, graph=None, *, upper_bound=None) -> None:
+        super().__init__(instance, graph, upper_bound=upper_bound)
         self.r: dict[int, pulp.LpVariable] = {}
-        self.c: pulp.LpVariable | None = None
 
     def build(self) -> pulp.LpProblem:
         inst, sb = self.instance, self.sb
