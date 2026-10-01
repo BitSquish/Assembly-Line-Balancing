@@ -109,6 +109,11 @@ class PLIModel:
         except (AttributeError, gurobipy.GurobiError):
             bound = None
 
+        # Ctrl+C: Gurobi intercetta l'interruzione e si ferma senza sollevare
+        # eccezioni. La si rilancia, così l'esecuzione non viene registrata
+        # come se fosse arrivata al time limit.
+        if m.Status == GRB.INTERRUPTED:
+            raise KeyboardInterrupt
         if m.Status == GRB.OPTIMAL:
             return Status.OPTIMAL, bound
         if m.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):

@@ -34,16 +34,16 @@
       "tasks_per_station": 3,
       "time_dist": "uniform"
     },
-    {
+        {
       "n": 50,
       "order_strength": 0.2,
-      "tasks_per_station": 3,
+      "tasks_per_station": 6,
       "time_dist": "bimodal"
     },
     {
       "n": 50,
       "order_strength": 0.6,
-      "tasks_per_station": 3,
+      "tasks_per_station": 6,
       "time_dist": "bimodal"
     },
     {
