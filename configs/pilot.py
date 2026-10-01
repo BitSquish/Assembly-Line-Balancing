@@ -1,7 +1,7 @@
 {
-  "description": "Disegno sperimentale. Fattori e livelli seguono Otto, Otto & Scholl (2013), EJOR 228(1): n = 50 (medium) e 100 (large), order strength 0.2 e 0.6, 25 istanze per combinazione. Il numero medio di task per stazione sostituisce la distribuzione dei tempi relativa al tempo ciclo (non noto nel SALBP-2): 3 = difficile (come PM), 6 = intermedio, 10 = facile (come PB).",
+  "description": "Prova pilota: stesso disegno di design.json, 5 istanze per gruppo.",
   "base_seed": 2026,
-  "instances_per_group": 25,
+  "instances_per_group": 5,
   "t_min": 1,
   "t_max": 100,
   "factors": {
