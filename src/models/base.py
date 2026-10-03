@@ -54,7 +54,7 @@ class PLIModel:
         
         # MIPGapAbs < 1: l'ottimo è intero, quindi quando la distanza tra
         # soluzione e bound scende sotto 1 l'ottimo è dimostrato.
-        prob.solve(pulp.GUROBI(msg=msg, timeLimit=time_limit, MIPGapAbs=0.999))
+        prob.solve(pulp.GUROBI(msg=msg, timeLimit=time_limit, MIPGapAbs=0.999, Threads=6))
         elapsed = time.perf_counter() - t0
         status, dual_bound = self._read_status(prob)
 
