@@ -2,7 +2,7 @@
 
 Uso:
     python -m scripts.run_experiments --manifest instances_pilot/manifest.csv \\
-        --out results/pilot.csv --time-limit 60
+        --out results/pilot.csv --time-limit 180
 
     # campagna completa
     python -m scripts.run_experiments --manifest instances/manifest.csv \\

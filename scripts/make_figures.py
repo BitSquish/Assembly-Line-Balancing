@@ -1,33 +1,43 @@
 """Tabelle e grafici dai risultati degli esperimenti.
 
 Uso:
-    python -m scripts.make_figures --results results/pilot.csv --out results/figures_pilot/
-    python -m scripts.make_figures --results results/results.csv --out results/figures/
+    python -m scripts.make_figures --results results/results.csv \\
+        --out results/figures_results/ --time-limit 180
 
-Legge il CSV scritto da run_experiments.py e produce, nella cartella --out:
+Legge il CSV scritto da run_experiments.py (o dal menù, src/main.py) e produce,
+nella cartella --out:
 
+    tabella_riassunto.csv     per metodo, sul totale e per numero di task
     tabella_pli.csv           per gruppo e modello: % di ottimi dimostrati, tempo
-                              medio, gap medio al time limit, esecuzioni senza soluzione
-    tabella_euristiche.csv    per gruppo ed euristica: scarto medio dal riferimento,
-                              % di istanze in cui eguaglia il miglior valore noto
+                              medio, gap medio al termine, esecuzioni senza soluzione
+    tabella_euristiche.csv    per gruppo ed euristica: scarto medio e massimo dal
+                              riferimento, % di istanze in cui eguaglia il miglior
+                              valore noto
     confronto_euristiche.csv  gruppi contro Hoffmann: vittorie, pareggi, sconfitte
                               e test di Wilcoxon (se scipy è installato)
-    pli_ottimi.png            % di istanze risolte all'ottimo, per gruppo e modello
-    pli_tempi.png             tempo medio di calcolo, per gruppo e modello
-    pli_gap.png               gap medio al time limit, per gruppo e modello
-    euristiche_scarto.png     scarto medio dal riferimento, per gruppo ed euristica
-    euristiche_migliore.png   % di istanze in cui l'euristica eguaglia il miglior valore noto
+    pli_ottimi.png            % di istanze risolte all'ottimo dimostrato
+    pli_tempi.png             tempo medio di calcolo
+    pli_gap.png               gap medio tra soluzione e lower bound al termine
+    euristiche_scarto.png     scarto medio dal miglior lower bound
+    euristiche_migliore.png   % di istanze in cui l'euristica eguaglia il miglior
+                              valore noto
+
+Ogni grafico è una griglia di pannelli che segue il disegno sperimentale: una
+colonna per numero di task, una riga per order strength; dentro ogni pannello,
+un gruppo di barre per numero di stazioni e una barra per metodo. I gruppi fuori
+dal disegno fattoriale (per esempio con tempi bimodali) compaiono solo nelle
+tabelle.
 
 Riferimento per le euristiche. Per ogni istanza:
     miglior lower bound = massimo dei lower bound di tutti i metodi (ognuno è valido);
     miglior valore noto = minimo degli obiettivi di tutti i metodi.
 Se i due coincidono l'ottimo è dimostrato. Lo scarto di un'euristica è
 (obiettivo - miglior lower bound) / miglior lower bound: è la distanza dall'ottimo
-quando un PLI lo ha dimostrato, e un limite superiore a quella distanza altrimenti.
+quando l'ottimo è dimostrato, e un limite superiore a quella distanza altrimenti.
 
-I grafici usano le funzioni di questo modulo, che si possono anche importare:
+Le funzioni di questo modulo si possono anche importare:
 
-    from scripts.make_figures import load_results, plot_grouped_bars
+    from scripts.make_figures import load_results, plot_grid
 """
 
 from __future__ import annotations
@@ -44,13 +54,15 @@ import pandas as pd
 # Colore fisso per metodo (segue il metodo, non la posizione nel grafico).
 METHODS = {
     "patterson_albracht": ("Patterson & Albracht", "#2a78d6"),
-    "bowman_white": ("Bowman-White", "#eb6834"),
     "ritt_costa": ("Ritt & Costa", "#1baf7a"),
     "hoffmann": ("Hoffmann", "#eda100"),
     "gruppi": ("Gruppi", "#4a3aa7"),
 }
-PLI = ["patterson_albracht", "bowman_white", "ritt_costa"]
+PLI = ["patterson_albracht", "ritt_costa"]
 HEURISTICS = ["hoffmann", "gruppi"]
+
+# Il fattore "numero di stazioni" è memorizzato come task per stazione: m = n / valore.
+STATION_LABELS = {3: "tante\n(n/3)", 6: "medie\n(n/6)", 10: "poche\n(n/10)"}
 
 INK, INK_MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e3e2dc", "#fcfcfb"
 
@@ -61,13 +73,26 @@ INK, INK_MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e3e2dc", "#fcfcfb"
 def load_results(path: str | Path) -> pd.DataFrame:
     """Legge il CSV dei risultati e aggiunge i riferimenti per istanza.
 
-    Colonne aggiunte: best_lb, best_ub, proven (ottimo dimostrato per l'istanza),
-    dev (scarto dell'obiettivo dal miglior lower bound), is_best (eguaglia il
-    miglior valore noto), group_label (etichetta breve del gruppo).
+    Le righe di metodi non presenti in METHODS vengono scartate (con un avviso):
+    così un file che contiene ancora esecuzioni di un modello rimosso dal
+    progetto si analizza comunque, e i riferimenti usano solo i metodi attuali.
+
+    Colonne aggiunte: os_target (order strength obiettivo del gruppo), best_lb,
+    best_ub, proven (ottimo dimostrato per l'istanza), dev (scarto dell'obiettivo
+    dal miglior lower bound), is_best (eguaglia il miglior valore noto).
     """
     df = pd.read_csv(path)
-    for col in ("objective", "lower_bound", "time_s", "gap"):
+    unknown = sorted(set(df["method"]) - set(METHODS))
+    if unknown:
+        print(f"  Attenzione: righe scartate per metodi non previsti: {unknown}")
+        df = df[df["method"].isin(METHODS)].copy()
+    errors = int((df["status"] == "error").sum())
+    if errors:
+        print(f"  Attenzione: {errors} esecuzioni in errore (vedi la colonna 'error' del CSV)")
+
+    for col in ("objective", "lower_bound", "time_s", "gap", "n", "tasks_per_station"):
         df[col] = pd.to_numeric(df[col], errors="coerce")
+    df["os_target"] = df["group"].map(_os_from_group)
 
     per_instance = df.groupby("instance").agg(
         best_lb=("lower_bound", "max"), best_ub=("objective", "min")
@@ -76,33 +101,40 @@ def load_results(path: str | Path) -> pd.DataFrame:
     df["proven"] = df["best_lb"] == df["best_ub"]
     df["dev"] = (df["objective"] - df["best_lb"]) / df["best_lb"]
     df["is_best"] = df["objective"] == df["best_ub"]
-    df["group_label"] = [
-        _group_label(n, os_target, r, dist)
-        for n, os_target, r, dist in zip(
-            df["n"], df["group"].map(_os_from_group), df["tasks_per_station"], df["time_dist"]
-        )
-    ]
     return df
 
 
-def _os_from_group(group: str) -> str:
-    # "n50_os0.2_r3_uniform" -> "0.2" (l'OS obiettivo; la colonna "os" è quella ottenuta)
-    return next(p[2:] for p in group.split("_") if p.startswith("os"))
+def _os_from_group(group: str) -> float:
+    # "n50_os0.2_r3_uniform" -> 0.2 (l'OS obiettivo; la colonna "os" è quella ottenuta)
+    return float(next(p[2:] for p in group.split("_") if p.startswith("os")))
 
 
-def _group_label(n, os_target, r, dist) -> str:
-    label = f"n={n}\nOS {os_target}\n{r} task/staz."
-    return label + ("\nbimodale" if dist == "bimodal" else "")
+_GROUP_KEYS = ["group", "n", "os_target", "tasks_per_station", "time_dist", "method"]
 
 
-def _group_order(df: pd.DataFrame) -> list[str]:
-    """Gruppi nell'ordine in cui compaiono nel CSV (quello del disegno)."""
-    return list(dict.fromkeys(df["group_label"]))
+def summary_table(df: pd.DataFrame) -> pd.DataFrame:
+    """Una riga per metodo sul totale, poi una per metodo e numero di task."""
+    order = [m for m in METHODS if m in set(df["method"])]
+
+    def block(data: pd.DataFrame, label) -> pd.DataFrame:
+        out = data.groupby("method").agg(
+            istanze=("instance", "count"),
+            ottimi_pct=("status", lambda s: 100 * (s == "optimal").mean()),
+            scarto_medio_pct=("dev", lambda x: 100 * x.mean()),
+            scarto_max_pct=("dev", lambda x: 100 * x.max()),
+            miglior_valore_pct=("is_best", lambda x: 100 * x.mean()),
+            tempo_medio_s=("time_s", "mean"),
+        ).reindex(order).dropna(how="all")
+        out.insert(0, "n", label)
+        return out.reset_index()
+
+    parts = [block(df, "tutti")] + [block(part, int(n)) for n, part in df.groupby("n")]
+    return pd.concat(parts, ignore_index=True).round(2)
 
 
 def pli_table(df: pd.DataFrame) -> pd.DataFrame:
     d = df[df["kind"] == "pli"]
-    out = d.groupby(["group", "method"], sort=False).agg(
+    out = d.groupby(_GROUP_KEYS, sort=False).agg(
         istanze=("instance", "count"),
         ottimi_pct=("status", lambda s: 100 * (s == "optimal").mean()),
         tempo_medio_s=("time_s", "mean"),
@@ -114,7 +146,7 @@ def pli_table(df: pd.DataFrame) -> pd.DataFrame:
 
 def heuristic_table(df: pd.DataFrame) -> pd.DataFrame:
     d = df[df["kind"] == "euristica"]
-    out = d.groupby(["group", "method"], sort=False).agg(
+    out = d.groupby(_GROUP_KEYS, sort=False).agg(
         istanze=("instance", "count"),
         scarto_medio_pct=("dev", lambda x: 100 * x.mean()),
         scarto_max_pct=("dev", lambda x: 100 * x.max()),
@@ -160,7 +192,12 @@ def heuristic_comparison(df: pd.DataFrame, a: str = "gruppi", b: str = "hoffmann
 # ----------------------------------------------------------------- grafici
 
 
-def plot_grouped_bars(
+def _fmt(value: float) -> str:
+    """Numero con la virgola decimale e senza zeri inutili: 0.2 -> '0,2', 50.0 -> '50'."""
+    return f"{value:g}".replace(".", ",")
+
+
+def plot_grid(
     data: pd.DataFrame,
     value: str,
     methods: list[str],
@@ -173,7 +210,11 @@ def plot_grouped_bars(
     reference_line: float | None = None,
     reference_label: str = "",
 ) -> None:
-    """Barre affiancate: un gruppo di barre per gruppo di istanze, una barra per metodo.
+    """Griglia di pannelli: colonne = numero di task, righe = order strength.
+
+    In ogni pannello un gruppo di barre per numero di stazioni e una barra per
+    metodo. L'asse verticale è lo stesso in tutti i pannelli, così le altezze
+    si confrontano tra un pannello e l'altro.
 
     Args:
         data: righe dei risultati (da load_results), già filtrate se serve.
@@ -181,49 +222,95 @@ def plot_grouped_bars(
         methods: metodi da disegnare, nell'ordine voluto.
         agg: aggregazione per (gruppo, metodo): "mean" o una funzione.
         scale: fattore applicato ai valori (100 per passare a percentuali).
-        reference_line: linea orizzontale di riferimento (per esempio il time limit).
+        reference_line: linea orizzontale di riferimento (per esempio il limite di tempo).
     """
-    methods = [m for m in methods if m in set(data["method"])]
+    grid = data[data["time_dist"] == "uniform"]
+    methods = [m for m in methods if m in set(grid["method"])]
     if not methods:
         print(f"  (nessun dato per {Path(path).name}: saltato)")
         return
-    groups = _group_order(data)
-    table = (
-        data.groupby(["group_label", "method"])[value].agg(agg).unstack("method").reindex(groups) * scale
+
+    ns = sorted(grid["n"].unique())
+    oss = sorted(grid["os_target"].unique())
+    ratios = sorted(grid["tasks_per_station"].unique())
+    table = grid.groupby(["os_target", "n", "tasks_per_station", "method"])[value].agg(agg) * scale
+    # Istanze per gruppo, per ogni numero di task (il più frequente tra i suoi gruppi).
+    per_group = grid.groupby(["n", "group"])["instance"].nunique().groupby("n").agg(
+        lambda s: int(s.mode().iloc[0])
     )
 
+    fig, axes = plt.subplots(
+        len(oss), len(ns), sharex=True, sharey=True, squeeze=False,
+        figsize=(1.2 + 2.5 * len(ns), 1.6 + 1.9 * len(oss)), facecolor=SURFACE,
+    )
     width = 0.8 / len(methods)
-    fig, ax = plt.subplots(figsize=(max(7.0, 1.05 * len(groups) + 2.0), 4.6), facecolor=SURFACE)
-    ax.set_facecolor(SURFACE)
-    for k, method in enumerate(methods):
-        label, color = METHODS[method]
-        x = [g + (k - (len(methods) - 1) / 2) * width for g in range(len(groups))]
-        # Lo spazio tra le barre è lasciato alla superficie (bordo dello stesso colore).
-        ax.bar(x, table[method].fillna(0), width=width, color=color, label=label,
-               edgecolor=SURFACE, linewidth=1.5, zorder=3)
+    # Stesso asse verticale in tutti i pannelli, con un margine sopra la barra più alta.
+    shown = table[table.index.get_level_values("method").isin(methods)]
+    y_top = max(float(shown.max()) if len(shown) else 0.0, reference_line or 0.0)
+    y_top = y_top * 1.1 if y_top > 0 else 1.0
+    for row, os_value in enumerate(oss):
+        for col, n in enumerate(ns):
+            ax = axes[row][col]
+            ax.set_facecolor(SURFACE)
+            drawn = False
+            for k, method in enumerate(methods):
+                label, color = METHODS[method]
+                heights = [table.get((os_value, n, r, method), float("nan")) for r in ratios]
+                if all(pd.isna(h) for h in heights):
+                    continue
+                drawn = True
+                x = [g + (k - (len(methods) - 1) / 2) * width for g in range(len(ratios))]
+                # Lo spazio tra le barre è lasciato alla superficie (bordo dello stesso colore).
+                ax.bar(x, [0 if pd.isna(h) else h for h in heights], width=width, color=color,
+                       label=label, edgecolor=SURFACE, linewidth=1.5, zorder=3)
+                # Una barra di altezza zero non si vede: si scrive il valore, così
+                # "zero" si distingue da "dato mancante".
+                for xk, h in zip(x, heights):
+                    if pd.isna(h) or h == 0:
+                        ax.text(xk, y_top * 0.015, "n.d." if pd.isna(h) else "0", ha="center",
+                                va="bottom", fontsize=6.5, color=INK_MUTED, zorder=4)
+            if not drawn:
+                ax.text(0.5, 0.5, "nessun dato", transform=ax.transAxes, ha="center",
+                        va="center", fontsize=8, color=INK_MUTED)
+            if reference_line is not None:
+                ax.axhline(reference_line, color=INK_MUTED, linewidth=1, linestyle=(0, (4, 3)),
+                           zorder=2)
 
-    if reference_line is not None:
-        ax.axhline(reference_line, color=INK_MUTED, linewidth=1, zorder=2)
-        ax.annotate(reference_label, xy=(len(groups) - 0.5, reference_line), xytext=(0, 3),
-                    textcoords="offset points", ha="right", va="bottom",
-                    fontsize=8, color=INK_MUTED)
+            if row == 0:
+                ax.set_title(f"{int(n)} task\n({per_group[n]} istanze per gruppo)",
+                             fontsize=9, color=INK, pad=6)
+            if col == 0:
+                ax.set_ylabel(f"OS {_fmt(os_value)}", fontsize=9, color=INK)
+            ax.set_xticks(range(len(ratios)))
+            ax.set_xticklabels(
+                [STATION_LABELS.get(int(r), f"n/{_fmt(r)}") for r in ratios],
+                fontsize=7.5, color=INK_MUTED,
+            )
+            ax.set_ylim(0, y_top)
+            ax.yaxis.grid(True, color=GRID, linewidth=1, zorder=1)
+            ax.set_axisbelow(True)
+            ax.tick_params(axis="both", length=0, labelcolor=INK_MUTED, labelsize=7.5)
+            for side in ("top", "right", "left"):
+                ax.spines[side].set_visible(False)
+            ax.spines["bottom"].set_color(GRID)
 
-    ax.set_xticks(range(len(groups)))
-    ax.set_xticklabels(groups, fontsize=8, color=INK_MUTED)
-    ax.set_ylabel(ylabel, fontsize=9, color=INK_MUTED)
-    ax.set_title(title, fontsize=11, color=INK, loc="left", pad=28)
-    ax.set_ylim(bottom=0)
-    ax.yaxis.grid(True, color=GRID, linewidth=1, zorder=1)
-    ax.set_axisbelow(True)
-    ax.tick_params(axis="both", length=0, labelcolor=INK_MUTED, labelsize=8)
-    for side in ("top", "right", "left"):
-        ax.spines[side].set_visible(False)
-    ax.spines["bottom"].set_color(GRID)
-    if len(methods) > 1:
-        ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=len(methods),
-                  frameon=False, fontsize=8.5, labelcolor=INK, handlelength=1.1)
+    # Intestazione: titolo, legenda e una riga che spiega come leggere la griglia.
+    height = fig.get_figheight()
+    top = 1 - 0.80 / height                 # 0,80 pollici riservati all'intestazione
+    fig.suptitle(title, x=0.01, y=1 - 0.08 / height, ha="left", va="top",
+                 fontsize=11, color=INK)
+    how_to_read = (f"{ylabel}. Colonne: numero di task. Righe: order strength (OS). "
+                   "Asse orizzontale: numero di stazioni m.")
+    if reference_line is not None and reference_label:
+        how_to_read += f" Linea tratteggiata: {reference_label}."
+    fig.text(0.01, 1 - 0.40 / height, how_to_read,
+             ha="left", va="top", fontsize=8, color=INK_MUTED)
+    handles = [plt.Rectangle((0, 0), 1, 1, color=METHODS[m][1]) for m in methods]
+    fig.legend(handles, [METHODS[m][0] for m in methods], loc="upper left",
+               bbox_to_anchor=(0.005, 1 - 0.58 / height), ncol=len(methods), frameon=False,
+               fontsize=8.5, labelcolor=INK, handlelength=1.1, borderaxespad=0)
 
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, top))
     fig.savefig(path, dpi=160, facecolor=SURFACE)
     plt.close(fig)
     print(f"  {path}")
@@ -234,8 +321,12 @@ def make_all(results: str | Path, out: str | Path, time_limit: float | None = No
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     df = load_results(results)
-    print(f"{df['instance'].nunique()} istanze, metodi: {sorted(df['method'].unique())}")
+    print(f"{df['instance'].nunique()} istanze, metodi: {[m for m in METHODS if m in set(df['method'])]}")
+    outside = sorted(df.loc[df["time_dist"] != "uniform", "group"].unique())
+    if outside:
+        print(f"  Gruppi solo nelle tabelle (fuori dalla griglia dei grafici): {outside}")
 
+    summary_table(df).to_csv(out / "tabella_riassunto.csv", index=False)
     pli_table(df).to_csv(out / "tabella_pli.csv", index=False)
     heuristic_table(df).to_csv(out / "tabella_euristiche.csv", index=False)
     comparison = heuristic_comparison(df)
@@ -245,24 +336,24 @@ def make_all(results: str | Path, out: str | Path, time_limit: float | None = No
 
     pli = df[df["kind"] == "pli"].copy()
     pli["optimal"] = pli["status"] == "optimal"
-    plot_grouped_bars(pli, "optimal", PLI, scale=100,
-                      title="Istanze risolte all'ottimo dimostrato entro il time limit",
-                      ylabel="% di istanze", path=out / "pli_ottimi.png")
-    plot_grouped_bars(pli, "time_s", PLI,
-                      title="Tempo medio di calcolo dei modelli PLI",
-                      ylabel="secondi", path=out / "pli_tempi.png",
-                      reference_line=time_limit, reference_label="time limit")
-    plot_grouped_bars(pli, "gap", PLI, scale=100,
-                      title="Gap medio tra soluzione e lower bound al termine",
-                      ylabel="gap (%)", path=out / "pli_gap.png")
+    plot_grid(pli, "optimal", PLI, scale=100,
+              title="Istanze risolte all'ottimo dimostrato entro il limite di tempo",
+              ylabel="% di istanze", path=out / "pli_ottimi.png")
+    plot_grid(pli, "time_s", PLI,
+              title="Tempo medio di calcolo dei modelli PLI",
+              ylabel="Secondi", path=out / "pli_tempi.png",
+              reference_line=time_limit, reference_label="limite di tempo")
+    plot_grid(pli, "gap", PLI, scale=100,
+              title="Gap medio tra soluzione e lower bound del modello al termine",
+              ylabel="Gap (%)", path=out / "pli_gap.png")
 
     heur = df[df["kind"] == "euristica"].copy()
-    plot_grouped_bars(heur, "dev", HEURISTICS, scale=100,
-                      title="Scarto medio delle euristiche dal miglior lower bound",
-                      ylabel="scarto (%)", path=out / "euristiche_scarto.png")
-    plot_grouped_bars(heur, "is_best", HEURISTICS, scale=100,
-                      title="Istanze in cui l'euristica eguaglia il miglior valore noto",
-                      ylabel="% di istanze", path=out / "euristiche_migliore.png")
+    plot_grid(heur, "dev", HEURISTICS, scale=100,
+              title="Scarto medio delle euristiche dal miglior lower bound",
+              ylabel="Scarto (%)", path=out / "euristiche_scarto.png")
+    plot_grid(heur, "is_best", HEURISTICS, scale=100,
+              title="Istanze in cui l'euristica eguaglia il miglior valore noto",
+              ylabel="% di istanze", path=out / "euristiche_migliore.png")
 
 
 def main() -> None:
@@ -270,7 +361,7 @@ def main() -> None:
     parser.add_argument("--results", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--time-limit", type=float, default=None,
-                        help="time limit usato, per disegnarlo nel grafico dei tempi")
+                        help="limite di tempo usato, per disegnarlo nel grafico dei tempi")
     args = parser.parse_args()
     make_all(args.results, args.out, args.time_limit)
 
