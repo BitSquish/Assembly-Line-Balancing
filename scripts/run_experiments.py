@@ -1,4 +1,4 @@
-"""Esegue la campagna di esperimenti: tre modelli PLI e due euristiche su ogni istanza.
+"""Esegue la campagna di esperimenti: due modelli PLI e due euristiche su ogni istanza.
 
 Uso:
     python -m scripts.run_experiments --manifest instances_pilot/manifest.csv \\
@@ -6,7 +6,7 @@ Uso:
 
     # campagna completa
     python -m scripts.run_experiments --manifest instances/manifest.csv \\
-        --out results/results.csv --time-limit 300
+        --out results/results.csv --time-limit 180
 
     # solo alcuni metodi
     python -m scripts.run_experiments ... --methods hoffmann gruppi
@@ -37,12 +37,11 @@ from pathlib import Path
 
 from src.heuristic import groups, hoffmann
 from src.instance import ALBInstance
-from src.models import BowmanWhiteModel, PattersonAlbrachtModel, RittCostaModel
+from src.models import PattersonAlbrachtModel, RittCostaModel
 
 # nome nel CSV -> (tipo, funzione che risolve l'istanza)
 METHODS = {
     "patterson_albracht": ("pli", lambda inst, tl: _solve_pli(PattersonAlbrachtModel, inst, tl)),
-    "bowman_white": ("pli", lambda inst, tl: _solve_pli(BowmanWhiteModel, inst, tl)),
     "ritt_costa": ("pli", lambda inst, tl: _solve_pli(RittCostaModel, inst, tl)),
     "hoffmann": ("euristica", lambda inst, tl: hoffmann.solve(inst)),
     "gruppi": ("euristica", lambda inst, tl: groups.solve(inst)),

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from src.models import BowmanWhiteModel, PattersonAlbrachtModel, RittCostaModel
+from src.models import PattersonAlbrachtModel, RittCostaModel
 from src.solution import Status, is_feasible
 from tests.helpers import brute_force_optimum, random_instance
 
-MODELS = [PattersonAlbrachtModel, BowmanWhiteModel, RittCostaModel]
+MODELS = [PattersonAlbrachtModel, RittCostaModel]
 
 
 @pytest.mark.parametrize("Model", MODELS)
