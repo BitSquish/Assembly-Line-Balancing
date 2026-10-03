@@ -8,3 +8,15 @@ __pycache__/
 .venv/
 venv/
 env/
+
+#Demo
+instances_demo/
+results/demo_*.csv
+results/figures_demo_*/
+
+#Temporaneo
+instances/
+instances_pilot/
+results/results.csv
+results/pilot.csv
+results/figures_results/
