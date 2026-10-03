@@ -4,7 +4,8 @@ Uso (dalla cartella del progetto):
     python main.py
 
     1) Tutti gli esperimenti: la campagna completa definita in configs/design.json.
-    2) Demo rapida: tre istanze da 50 task, tutti i metodi, 15 secondi per ogni PLI.
+    2) Demo rapida: tre istanze da 50 task, tutti i metodi, 15 secondi per ogni PLI
+       (al massimo un minuto e mezzo con due modelli PLI).
     3) Personalizzato: metodi, limite di tempo e parametri delle istanze a scelta.
     4) Vedi risultati: tabella riassuntiva di un file di risultati già prodotto.
     5) Genera grafici e tabelle da un file di risultati.
@@ -75,7 +76,6 @@ HEURISTICS = [name for name, (kind, _) in METHODS.items() if kind != "pli"]
 
 LABELS = {
     "patterson_albracht": "PLI Patterson-Albracht",
-    "bowman_white": "PLI Bowman-White",
     "ritt_costa": "PLI Ritt-Costa",
     "hoffmann": "Euristica di Hoffmann",
     "gruppi": "Euristica dei gruppi",
@@ -86,7 +86,8 @@ LABELS = {
 PARAMETERS = [
     ("n", "Numero di task",
      "Quanti task ha ogni istanza generata: è la dimensione del problema.",
-     [(50, "50  (istanza media)"), (100, "100 (istanza grande)")],
+     [(20, "20  (istanza piccola)"), (50, "50  (istanza media)"),
+      (100, "100 (istanza grande)"), (200, "200 (istanza molto grande)")],
      lambda v: int(v) if 4 <= int(v) <= 1000 else None),
     ("order_strength", "Densità delle precedenze (order strength)",
      "Frazione delle coppie di task il cui ordine è imposto dalle precedenze:\n"
@@ -115,28 +116,40 @@ def stations(g: dict) -> int:
 
 
 def timeout_share(g: dict) -> float:
-    """Quota di esecuzioni PLI che arrivano al limite di tempo, dalla prova pilota."""
+    """Quota di esecuzioni PLI che arrivano al limite di tempo.
+
+    Per 50 e 100 task viene dalla prova pilota; per 20 e 200 task è un'ipotesi.
+    """
     r, n, os_ = g["tasks_per_station"], g["n"], g["order_strength"]
+    if n <= 20:
+        return 0.02
     if r >= 10:
-        return 0.05
+        return 0.05 if n <= 100 else 0.5
     if r >= 6:
-        return 0.1 if n <= 50 else 0.7
+        if n <= 50:
+            return 0.1
+        return 0.7 if n <= 100 else 1.0
     return 0.1 if (os_ >= 0.9 and n <= 50) else 1.0
 
 
 def duration(groups: list[dict], per_group: int, methods: list[str],
              time_limit: float) -> tuple[float, float]:
-    """(durata stimata, durata massima) in secondi."""
+    """(durata stimata, durata massima) in secondi.
+
+    per_group vale per i gruppi che non indicano un proprio numero di istanze
+    (chiave "instances", usata in configs/design.json per n = 200).
+    """
     n_pli = sum(m in PLI for m in methods)
     n_heur = len(methods) - n_pli
     worst = estimate = 0.0
     for g in groups:
-        runs = per_group * n_pli
+        count = g.get("instances", per_group)
+        runs = count * n_pli
         share = timeout_share(g)
         worst += runs * time_limit
         estimate += runs * (share * time_limit + (1 - share) * min(5.0, time_limit))
-        estimate += per_group * n_heur * 0.2
-        worst += per_group * n_heur * 1.0
+        estimate += count * n_heur * 0.2
+        worst += count * n_heur * 1.0
     return estimate, worst
 
 
@@ -218,6 +231,8 @@ def ask_int(prompt: str, default: int, low: int, high: int) -> int:
 def print_groups(groups: list[dict], notes: list[str] | None = None) -> None:
     for k, g in enumerate(groups):
         note = f"  {Style.DIM}({notes[k]}){Style.RESET}" if notes else ""
+        if "instances" in g:
+            note += f"  {Style.DIM}({g['instances']} istanze){Style.RESET}"
         print(f"  {Style.CYAN}-{Style.RESET} {group_name(g):26s} task = {g['n']:<4d} "
               f"stazioni = {stations(g):<3d} OS = {g['order_strength']:<4g} "
               f"tempi = {g['time_dist']}{note}")
@@ -287,7 +302,7 @@ def run(groups: list[dict], per_group: int, methods: list[str], time_limit: floa
                         rows.append(row)
 
                         prefix = f"{Style.DIM}[{count:03d}/{total:03d}]{Style.RESET}"
-                        print(f"{prefix} {Style.CYAN}{name:30s}{Style.RESET} {LABELS[method]:24s} "
+                        print(f"{prefix} {Style.CYAN}{name:30s}{Style.RESET} {LABELS.get(method, method):24s} "
                               f"{status_color}{row['status']:9s}{Style.RESET} "
                               f"carico max = {str(row.get('objective') or '-'):<5} "
                               f"lower bound = {str(row.get('lower_bound') or '-'):<5} "
@@ -334,7 +349,7 @@ def summary(rows: list[dict], methods: list[str]) -> None:
             ) / len(sel)
             mean_t = sum(r["time_s"] for r in sel) / len(sel)
 
-            print(f"{gname:26s} {LABELS[method]:24s} {opt_str} "
+            print(f"{gname:26s} {LABELS.get(method, method):24s} {opt_str} "
                   f"{mean_obj:>11.1f} {dev:>9.2f} {mean_t:>8.2f}")
         print(line_thin)
 
@@ -359,10 +374,11 @@ def campaign() -> None:
     estimate, worst = duration(groups, per_group, methods, CAMPAIGN_TIME_LIMIT)
 
     print(f"\n{Style.BOLD}Campagna completa ({DESIGN}){Style.RESET}")
-    print(f"{Style.DIM}Gruppi: {len(groups)} | Istanze per gruppo: {per_group} | "
-          f"Totale: {len(groups) * per_group} istanze{Style.RESET}")
+    total = sum(g.get("instances", per_group) for g in groups)
+    print(f"{Style.DIM}Gruppi: {len(groups)} | Istanze per gruppo: {per_group} "
+          f"(salvo dove indicato) | Totale: {total} istanze{Style.RESET}")
     print_groups(groups)
-    print(f"\n{Style.BOLD}Metodi:{Style.RESET} {', '.join(LABELS[m] for m in methods)}")
+    print(f"\n{Style.BOLD}Metodi:{Style.RESET} {', '.join(LABELS.get(m, m) for m in methods)}")
     print(f"{Style.BOLD}Limite di tempo:{Style.RESET} {CAMPAIGN_TIME_LIMIT:g} secondi per ogni PLI")
     print(f"{Style.BOLD}Durata stimata:{Style.RESET} {fmt_time(estimate)} "
           f"{Style.DIM}(massima {fmt_time(worst)}){Style.RESET}")
@@ -393,7 +409,8 @@ def demo() -> None:
     groups = [g for _, g in DEMO_GROUPS]
     estimate, worst = duration(groups, 1, methods, DEMO_TIME_LIMIT)
 
-    print(f"\n{Style.BOLD}Demo rapida{Style.RESET} (3 istanze da 50 task, 3 PLI e 2 euristiche)")
+    print(f"\n{Style.BOLD}Demo rapida{Style.RESET} (3 istanze da 50 task, "
+          f"{len(PLI)} PLI e {len(HEURISTICS)} euristiche)")
     print(f"{Style.DIM}Limite di tempo: {DEMO_TIME_LIMIT:g} secondi per ogni PLI | "
           f"Durata stimata: {fmt_time(estimate)} (massima {fmt_time(worst)}){Style.RESET}\n")
     print_groups(groups, notes=[text for text, _ in DEMO_GROUPS])
@@ -409,7 +426,7 @@ def custom() -> None:
         "Metodi da eseguire",
         ["Solo i modelli PLI (soluzione esatta, con limite di tempo)",
          "Solo le euristiche (soluzione approssimata, immediata)",
-         "Tutti (3 PLI e 2 euristiche)",
+         f"Tutti ({len(PLI)} PLI e {len(HEURISTICS)} euristiche)",
          "Scelgo i singoli metodi"],
         default=3,
     )
@@ -424,9 +441,10 @@ def custom() -> None:
         names = list(METHODS)
         print()
         for k, name in enumerate(names, 1):
-            print(f"  {Style.CYAN}{k}){Style.RESET} {LABELS[name]}")
+            print(f"  {Style.CYAN}{k}){Style.RESET} {LABELS.get(name, name)}")
         while True:
-            raw = ask("Numeri dei metodi, separati da virgola (es. 1,2,5)", "1,2,3,4,5")
+            raw = ask("Numeri dei metodi, separati da virgola (es. 1,3)",
+                      ",".join(str(k) for k in range(1, len(names) + 1)))
             parts = [p.strip() for p in raw.split(",") if p.strip()]
             if parts and all(p.isdigit() and 1 <= int(p) <= len(names) for p in parts):
                 methods = list(dict.fromkeys(names[int(p) - 1] for p in parts))
@@ -529,7 +547,7 @@ def run_tests() -> None:
     """Voce 6: test del progetto (pytest)."""
     print(f"\n{Style.BOLD}Test del progetto (pytest){Style.RESET}")
     print(f"{Style.DIM}Ogni modello PLI è confrontato con l'ottimo calcolato per enumerazione "
-          f"completa su 120 istanze piccole.{Style.RESET}\n")
+          f"completa su istanze piccole.{Style.RESET}\n")
     result = subprocess.run([sys.executable, "-m", "pytest", "-q"])
     if result.returncode != 0:
         print(f"\n{Style.RED}Alcuni test non sono passati (codice {result.returncode}).{Style.RESET}")
@@ -548,7 +566,8 @@ def main() -> None:
         choice = choose(
             "Menù principale",
             ["Esegui tutti gli esperimenti (campagna completa, molte ore)",
-             "Demo rapida (3 istanze, 3 PLI e 2 euristiche, meno di 3 minuti)",
+             f"Demo rapida (3 istanze, {len(PLI)} PLI e {len(HEURISTICS)} euristiche, "
+             f"al massimo {fmt_time(3 * len(PLI) * DEMO_TIME_LIMIT + 3)})",
              "Personalizzato (metodi, limite di tempo e parametri a scelta)",
              "Vedi risultati (tabella di un file già prodotto)",
              "Genera grafici e tabelle da un file di risultati",
