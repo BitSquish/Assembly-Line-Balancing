@@ -79,8 +79,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--time-limit", type=float, default=60.0,
-                        help="secondi per ogni modello PLI (default 60)")
+    parser.add_argument("--time-limit", type=float, default=180.0,
+                    help="secondi per ogni modello PLI (default 180)")
     parser.add_argument("--methods", nargs="+", choices=list(METHODS), default=list(METHODS))
     args = parser.parse_args()
 

@@ -22,6 +22,14 @@ la ricerca ha un limite di nodi (node_limit): oltre il limite si usa il miglior
 insieme trovato fino a quel momento. A parità di carico si tiene il primo
 insieme trovato; la ricerca esplora per prime le operazioni più lunghe.
 
+Quando il limite scatta, la stazione può non essere saturata al meglio. Per
+sapere quanto spesso succede, il risultato riporta due conteggi (in `extra`):
+    node_limit_hits        stazioni della soluzione restituita in cui la
+                           ricerca è stata interrotta dal limite;
+    node_limit_hits_total  lo stesso conteggio su tutti i tempi ciclo provati,
+                           compresi quelli scartati.
+Se sono entrambi zero, ogni stazione è stata saturata con una ricerca completa.
+
 Origine e letteratura:
     L'idea di saturare ogni stazione è nata nello sviluppo di questo progetto,
     come evoluzione di due euristiche precedenti (per layer del grafo delle
@@ -60,13 +68,18 @@ def saturate_station(
     available: set[int],
     capacity: int,
     node_limit: int,
-) -> list[int]:
+) -> tuple[list[int], bool]:
     """Insieme di operazioni ammissibile con carico massimo <= capacity.
 
     Args:
         missing_preds: per ogni operazione non assegnata, quanti predecessori
             mancano ancora; un'operazione diventa disponibile quando arriva a 0.
         available: operazioni già disponibili all'apertura della stazione.
+
+    Returns:
+        L'insieme scelto e un indicatore: True se la ricerca è stata interrotta
+        dal limite di nodi prima di saturare la stazione, quindi l'insieme
+        potrebbe non essere il migliore.
 
     Un insieme è ammissibile se ogni sua operazione ha tutti i predecessori
     già assegnati o dentro l'insieme stesso. Lo stesso insieme si raggiunge in
@@ -100,21 +113,33 @@ def saturate_station(
                     new_avail.add(j)
             stack.append((chosen | {i}, load + t[i], new_missing, frozenset(new_avail)))
 
-    return list(best_set)
+    # Il limite è scattato se si è usciti dal ciclo senza aver saturato la
+    # stazione e resta almeno un insieme non ancora esplorato.
+    limit_hit = (
+        best_load < capacity
+        and len(seen) >= node_limit
+        and any(entry[0] not in seen for entry in stack)
+    )
+    return list(best_set), limit_hit
 
 
 def _assign_with_cycle_time(
     instance: ALBInstance, graph: PrecedenceGraph, c: int, node_limit: int
-) -> tuple[int, ...] | None:
-    """Stazione di ogni operazione se c basta con m stazioni, altrimenti None."""
+) -> tuple[tuple[int, ...] | None, int]:
+    """Stazione di ogni operazione se c basta con m stazioni, altrimenti None.
+
+    Il secondo valore è il numero di stazioni in cui è scattato il limite di nodi.
+    """
     n, m, t = instance.n_tasks, instance.m_stations, instance.task_times
     successors = [tuple(graph.successors(i)) for i in range(n)]
     missing = {i: len(graph.predecessors(i)) for i in range(n)}
     available = {i for i in range(n) if missing[i] == 0}
     stations = [0] * n
+    hits = 0
 
     for s in range(1, m + 1):
-        chosen = saturate_station(t, successors, missing, available, c, node_limit)
+        chosen, limit_hit = saturate_station(t, successors, missing, available, c, node_limit)
+        hits += limit_hit
         for i in chosen:
             stations[i] = s
         # Si aggiornano i disponibili dopo aver segnato tutte le scelte: un'operazione
@@ -128,7 +153,7 @@ def _assign_with_cycle_time(
         if not available:
             break
 
-    return tuple(stations) if all(stations) else None
+    return (tuple(stations) if all(stations) else None), hits
 
 
 def solve(
@@ -143,8 +168,10 @@ def solve(
     lb = lower_bound(instance, graph)
 
     # c = somma dei tempi funziona sempre (tutto in una stazione): il ciclo termina.
+    hits_total = 0
     for c in range(lb, instance.total_time + 1):
-        stations = _assign_with_cycle_time(instance, graph, c, node_limit)
+        stations, hits = _assign_with_cycle_time(instance, graph, c, node_limit)
+        hits_total += hits
         if stations is not None:
             break
 
@@ -161,5 +188,10 @@ def solve(
         lower_bound=lb,
         time_s=time.perf_counter() - t0,
         solution=solution,
-        extra={"tried_cycle_times": c - lb + 1, "node_limit": node_limit},
+        extra={
+            "tried_cycle_times": c - lb + 1,
+            "node_limit": node_limit,
+            "node_limit_hits": hits,
+            "node_limit_hits_total": hits_total,
+        },
     )
