@@ -53,7 +53,8 @@ def main() -> None:
     for g in groups_from_config(cfg):
         gname = group_name(g)
         m = max(2, round(g["n"] / g["tasks_per_station"]))
-        for k in range(cfg["instances_per_group"]):
+        count = g.get("instances", cfg["instances_per_group"])
+        for k in range(count):
             # Seed stabile: dipende solo da configurazione, gruppo e indice.
             seed = zlib.crc32(f"{cfg['base_seed']}|{gname}|{k}".encode())
             name = f"{gname}_{k:02d}"
@@ -72,8 +73,7 @@ def main() -> None:
                 "os": round(PrecedenceGraph(inst).order_strength, 4),
                 "n_arcs": inst.n_precedences, "total_time": inst.total_time,
             })
-        print(f"{gname}: {cfg['instances_per_group']} istanze, m = {m}")
-
+        print(f"{gname}: {count} istanze, m = {m}")
     with (args.out / "manifest.csv").open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
         writer.writeheader()
