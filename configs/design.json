@@ -5,20 +5,9 @@
   "t_min": 1,
   "t_max": 100,
   "factors": {
-    "n": [20, 50, 100],
+    "n": [20, 50, 100, 200],
     "order_strength": [0.2, 0.6, 0.9],
     "tasks_per_station": [3, 6, 10],
     "time_dist": ["uniform"]
-  },
-  "extra_groups": [
-    {"n": 200, "order_strength": 0.2, "tasks_per_station": 3, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.2, "tasks_per_station": 6, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.2, "tasks_per_station": 10, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.6, "tasks_per_station": 3, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.6, "tasks_per_station": 6, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.6, "tasks_per_station": 10, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.9, "tasks_per_station": 3, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.9, "tasks_per_station": 6, "time_dist": "uniform", "instances": 10},
-    {"n": 200, "order_strength": 0.9, "tasks_per_station": 10, "time_dist": "uniform", "instances": 10}
-  ]
+  }
 }

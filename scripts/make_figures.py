@@ -263,12 +263,17 @@ def plot_grid(
                 # Lo spazio tra le barre è lasciato alla superficie (bordo dello stesso colore).
                 ax.bar(x, [0 if pd.isna(h) else h for h in heights], width=width, color=color,
                        label=label, edgecolor=SURFACE, linewidth=1.5, zorder=3)
-                # Una barra di altezza zero non si vede: si scrive il valore, così
-                # "zero" si distingue da "dato mancante".
+                # Una barra troppo bassa non si vede: si scrive il valore, così un
+                # numero piccolo si distingue da un dato mancante.
                 for xk, h in zip(x, heights):
-                    if pd.isna(h) or h == 0:
-                        ax.text(xk, y_top * 0.015, "n.d." if pd.isna(h) else "0", ha="center",
-                                va="bottom", fontsize=6.5, color=INK_MUTED, zorder=4)
+                    if pd.isna(h):
+                        text, base = "n.d.", 0.0
+                    elif h < y_top * 0.04:
+                        text, base = _fmt(round(h, 2)), h
+                    else:
+                        continue
+                    ax.text(xk, base + y_top * 0.015, text, ha="center", va="bottom",
+                            fontsize=6.5, color=INK_MUTED, zorder=4)
             if not drawn:
                 ax.text(0.5, 0.5, "nessun dato", transform=ax.transAxes, ha="center",
                         va="center", fontsize=8, color=INK_MUTED)
