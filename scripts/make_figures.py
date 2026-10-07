@@ -101,6 +101,11 @@ def load_results(path: str | Path) -> pd.DataFrame:
     df["proven"] = df["best_lb"] == df["best_ub"]
     df["dev"] = (df["objective"] - df["best_lb"]) / df["best_lb"]
     df["is_best"] = df["objective"] == df["best_ub"]
+    # Solo dove l'ottimo è noto (istanza chiusa da almeno un metodo): il metodo
+    # lo ha raggiunto? E quanto dista? Altrove il valore è mancante e non entra
+    # nelle medie.
+    df["reached"] = (df["objective"] == df["best_ub"]).where(df["proven"]).astype(float)
+    df["dev_opt"] = ((df["objective"] - df["best_ub"]) / df["best_ub"]).where(df["proven"])
     return df
 
 
@@ -124,6 +129,9 @@ def summary_table(df: pd.DataFrame) -> pd.DataFrame:
             scarto_max_pct=("dev", lambda x: 100 * x.max()),
             miglior_valore_pct=("is_best", lambda x: 100 * x.mean()),
             tempo_medio_s=("time_s", "mean"),
+            ottimo_noto=("proven", "sum"),
+            ottimo_raggiunto_pct=("reached", lambda x: 100 * x.mean()),
+            scarto_da_ottimo_pct=("dev_opt", lambda x: 100 * x.mean()),
         ).reindex(order).dropna(how="all")
         out.insert(0, "n", label)
         return out.reset_index()
@@ -153,6 +161,9 @@ def heuristic_table(df: pd.DataFrame) -> pd.DataFrame:
         miglior_valore_pct=("is_best", lambda x: 100 * x.mean()),
         istanze_con_ottimo_dimostrato=("proven", "sum"),
         tempo_medio_s=("time_s", "mean"),
+        ottimo_noto=("proven", "sum"),
+        ottimo_raggiunto_pct=("reached", lambda x: 100 * x.mean()),
+         scarto_da_ottimo_pct=("dev_opt", lambda x: 100 * x.mean()),
     )
     return out.round(3).reset_index()
 
@@ -359,6 +370,9 @@ def make_all(results: str | Path, out: str | Path, time_limit: float | None = No
     plot_grid(heur, "is_best", HEURISTICS, scale=100,
               title="Istanze in cui l'euristica eguaglia il miglior valore noto",
               ylabel="% di istanze", path=out / "euristiche_migliore.png")
+    plot_grid(heur, "reached", HEURISTICS, scale=100,
+            title="Istanze in cui l'euristica raggiunge l'ottimo (dove l'ottimo è noto)",
+            ylabel="% delle istanze con ottimo noto", path=out / "euristiche_ottimo.png")
 
 
 def main() -> None:

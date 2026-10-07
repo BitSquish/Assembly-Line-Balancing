@@ -319,18 +319,26 @@ def summary(rows: list[dict], methods: list[str]) -> None:
     Lo scostamento è calcolato rispetto al miglior lower bound dell'istanza
     (il massimo tra quelli di tutti i metodi eseguiti), che coincide con
     l'ottimo quando un metodo lo ha dimostrato.
+
+    "Ottimi" conta le istanze in cui il metodo dimostra l'ottimo da solo.
+    "Ott. ragg." conta, tra le istanze il cui ottimo è noto perché qualche
+    metodo lo ha dimostrato, quelle in cui il metodo lo ha trovato: è la misura
+    corretta per le euristiche, che possono trovare l'ottimo senza certificarlo.
     """
     ok = [r for r in rows if r.get("objective") not in (None, "")]
     best_lb: dict[str, int] = {}
+    best_ub: dict[str, int] = {}
     for r in ok:
         best_lb[r["instance"]] = max(best_lb.get(r["instance"], 0), r["lower_bound"])
+        best_ub[r["instance"]] = min(best_ub.get(r["instance"], r["objective"]), r["objective"])
+    closed = {i for i in best_ub if best_lb[i] == best_ub[i]}      # ottimo noto
 
-    line_thick = Style.MAGENTA + "=" * 88 + Style.RESET
-    line_thin = Style.DIM + "-" * 88 + Style.RESET
+    line_thick = Style.MAGENTA + "=" * 100 + Style.RESET
+    line_thin = Style.DIM + "-" * 100 + Style.RESET
 
     print(f"\n{line_thick}")
-    print(f"{Style.BOLD}{'Combinazione':26s} {'Metodo':24s} {'Ottimi':>7s} {'Carico max':>11s} "
-          f"{'Scost. %':>9s} {'Tempo s':>8s}{Style.RESET}")
+    print(f"{Style.BOLD}{'Combinazione':26s} {'Metodo':24s} {'Ottimi':>7s} {'Ott. ragg.':>11s} "
+          f"{'Carico max':>11s} {'Scost. %':>9s} {'Tempo s':>8s}{Style.RESET}")
     print(line_thin)
 
     for gname in dict.fromkeys(r["group"] for r in rows):
@@ -343,17 +351,22 @@ def summary(rows: list[dict], methods: list[str]) -> None:
             color = Style.GREEN if optimal > 0 else ""
             opt_str = f"{color}{optimal:>3d}{Style.RESET}/{len(sel):<3d}"
 
+            known = [r for r in sel if r["instance"] in closed]
+            reached = sum(r["objective"] == best_ub[r["instance"]] for r in known)
+            reach_str = f"{reached:>3d}/{len(known):<3d}" if known else "n.d."
+
             mean_obj = sum(r["objective"] for r in sel) / len(sel)
             dev = 100 * sum(
                 (r["objective"] - best_lb[r["instance"]]) / best_lb[r["instance"]] for r in sel
             ) / len(sel)
             mean_t = sum(r["time_s"] for r in sel) / len(sel)
 
-            print(f"{gname:26s} {LABELS.get(method, method):24s} {opt_str} "
+            print(f"{gname:26s} {LABELS.get(method, method):24s} {opt_str} {reach_str:>11s} "
                   f"{mean_obj:>11.1f} {dev:>9.2f} {mean_t:>8.2f}")
         print(line_thin)
 
-    print(f"{Style.DIM}Ottimi:     istanze con ottimo dimostrato (carico massimo = lower bound).")
+    print(f"{Style.DIM}Ottimi:     istanze in cui il metodo dimostra l'ottimo (carico massimo = lower bound).")
+    print("Ott. ragg.: istanze in cui il metodo trova l'ottimo, tra quelle con ottimo noto.")
     print("Carico max: carico massimo di stazione, in media sulle istanze (da minimizzare).")
     print(f"Scost. %:   distanza media dal miglior lower bound noto per l'istanza.{Style.RESET}")
 
