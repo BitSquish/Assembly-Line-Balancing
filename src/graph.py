@@ -8,8 +8,8 @@ quindi la si fa una volta sola qui e la si riusa.
 
 Le operazioni esposte da questa classe sono tutte ricorrenti in letteratura
 e servono a valle di questo modulo:
-    - chiusura transitiva  -> bound di stazione E_i, L_i (Ritt & Costa, 2015,
-      sez. 2.2) e regola di priorità MaxCPW (Scholl & Becker, 2006, tab. 8);
+     - chiusura transitiva  -> finestre di stazione E_i, L_i e lower bound
+      (bounds.py);
     - riduzione transitiva -> elimina archi ridondanti nei vincoli di
       precedenza dei modelli PLI (un arco deducibile da altri due non va
       duplicato come vincolo);

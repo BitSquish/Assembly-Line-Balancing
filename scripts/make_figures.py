@@ -21,12 +21,12 @@ nella cartella --out:
     euristiche_scarto.png     scarto medio dal miglior lower bound
     euristiche_migliore.png   % di istanze in cui l'euristica eguaglia il miglior
                               valore noto
+    euristiche_ottimo.png     % di istanze con ottimo noto in cui l'euristica lo raggiunge;
 
 Ogni grafico è una griglia di pannelli che segue il disegno sperimentale: una
 colonna per numero di task, una riga per order strength; dentro ogni pannello,
 un gruppo di barre per numero di stazioni e una barra per metodo. I gruppi fuori
-dal disegno fattoriale (per esempio con tempi bimodali) compaiono solo nelle
-tabelle.
+dal disegno fattoriale compaiono solo nelle tabelle.
 
 Riferimento per le euristiche. Per ogni istanza:
     miglior lower bound = massimo dei lower bound di tutti i metodi (ognuno è valido);
@@ -98,6 +98,9 @@ def load_results(path: str | Path) -> pd.DataFrame:
         best_lb=("lower_bound", "max"), best_ub=("objective", "min")
     )
     df = df.join(per_instance, on="instance")
+    bad = df.loc[df["best_lb"] > df["best_ub"], "instance"].unique()
+    if len(bad):
+        raise ValueError(f"lower bound sopra la miglior soluzione in {len(bad)} istanze: {list(bad[:5])}")
     df["proven"] = df["best_lb"] == df["best_ub"]
     df["dev"] = (df["objective"] - df["best_lb"]) / df["best_lb"]
     df["is_best"] = df["objective"] == df["best_ub"]
@@ -189,7 +192,7 @@ def heuristic_comparison(df: pd.DataFrame, a: str = "gruppi", b: str = "hoffmann
         diff = part[a] - part[b]
         p_value = None
         if wilcoxon is not None and (diff != 0).sum() >= 1:
-            p_value = round(float(wilcoxon(part[a], part[b]).pvalue), 5)
+            p_value = float(wilcoxon(part[a], part[b]).pvalue)
         rows.append({
             "group": name, "istanze": len(part),
             f"{a}_meglio": int((diff < 0).sum()), "pari": int((diff == 0).sum()),

@@ -1,8 +1,6 @@
 """Esegue la campagna di esperimenti: due modelli PLI e due euristiche su ogni istanza.
 
 Uso:
-    python -m scripts.run_experiments --manifest instances_pilot/manifest.csv \\
-        --out results/pilot.csv --time-limit 180
 
     # campagna completa
     python -m scripts.run_experiments --manifest instances/manifest.csv \\

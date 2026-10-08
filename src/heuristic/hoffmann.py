@@ -1,4 +1,4 @@
-"""Euristica di Hoffmann (saturazione delle stazioni) per il SALBP-2.
+"""Saturazione delle stazioni (Hoffmann, 1963) adattata al SALBP-2.
 
 L'euristica cerca il più piccolo tempo ciclo c per cui le m stazioni riescono a
 contenere tutte le operazioni, costruendo le stazioni una alla volta e

@@ -7,7 +7,7 @@ Uso:
     python -m scripts.rerun_bound check [--sample 5]
 
 La campagna è stata eseguita con il bound a finestre semplici
-(lower_bound(..., recursive=False)); il codice attuale usa anche teste e code
+(window_lower_bound); il codice attuale usa lower_bound, che aggiunge teste e code
 ricorsive. Il bound entra nei metodi solo come valore: c_min dei modelli PLI e
 punto di partenza della ricerca del tempo ciclo nelle euristiche. Quindi:
   - le euristiche si rieseguono tutte, perché il loro tempo include il calcolo

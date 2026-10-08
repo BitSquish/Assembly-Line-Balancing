@@ -13,8 +13,7 @@ Uso (dalla cartella del progetto):
 
 Le voci 2 e 3 generano le istanze al momento, con la stessa regola della campagna
 (scripts/gen_instances.py), e salvano istanze e risultati in instances_demo/ e
-results/demo_<data>_<ora>.csv. Le durate stimate si basano sulla prova pilota e
-sono indicative.
+results/demo_<data>_<ora>.csv. Le durate stimate si basano sulla campagna.
 """
 
 from __future__ import annotations
@@ -115,29 +114,30 @@ def stations(g: dict) -> int:
     return max(2, round(g["n"] / g["tasks_per_station"]))
 
 
+# Quota di esecuzioni PLI arrivate al limite di 180 s nella campagna
+# (results/results.csv): per numero di task, poi tante / medie / poche
+# stazioni, poi OS 0.2 / 0.6 / 0.9.
+_SHARE_N, _SHARE_R, _SHARE_OS = (20, 50, 100, 200), (3, 6, 10), (0.2, 0.6, 0.9)
+_SHARE = {
+    20: ((0, 0, 0), (0, 0, 0), (0, 0, 0)),
+    50: ((0.86, 0.78, 0), (0, 0.02, 0), (0, 0, 0)),
+    100: ((1, 1, 0.52), (0.46, 0.62, 0), (0, 0, 0)),
+    200: ((1, 1, 1), (1, 1, 1), (0.34, 0.5, 0.4)),
+}
+
+
 def timeout_share(g: dict) -> float:
-    """Quota di esecuzioni PLI che arrivano al limite di tempo.
-
-    Per 50 e 100 task viene dalla prova pilota; per 20 e 200 task è un'ipotesi.
-    """
-    r, n, os_ = g["tasks_per_station"], g["n"], g["order_strength"]
-    if n <= 20:
-        return 0.02
-    if r >= 10:
-        return 0.05 if n <= 100 else 0.5
-    if r >= 6:
-        if n <= 50:
-            return 0.1
-        return 0.7 if n <= 100 else 1.0
-    return 0.1 if (os_ >= 0.9 and n <= 50) else 1.0
-
+    """Quota di esecuzioni PLI che arrivano al limite di tempo, misurata nella
+    campagna con 180 s. Per parametri fuori dal disegno si usa la combinazione
+    più vicina. Con limiti più bassi la quota reale è più alta."""
+    def nearest(values, x):
+        return min(range(len(values)), key=lambda k: abs(values[k] - x))
+    n = _SHARE_N[nearest(_SHARE_N, g["n"])]
+    return _SHARE[n][nearest(_SHARE_R, g["tasks_per_station"])][nearest(_SHARE_OS, g["order_strength"])]
 
 def duration(groups: list[dict], per_group: int, methods: list[str],
              time_limit: float) -> tuple[float, float]:
-    """(durata stimata, durata massima) in secondi.
-
-    per_group vale per i gruppi che non indicano un proprio numero di istanze
-    (chiave "instances", usata in configs/design.json per n = 200).
+    """(durata stimata, durata massima) in secondi.  
     """
     n_pli = sum(m in PLI for m in methods)
     n_heur = len(methods) - n_pli

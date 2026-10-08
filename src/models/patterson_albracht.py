@@ -16,7 +16,7 @@ Notazione (stazioni 1..m, task 0-based):
     (3) sum_s s * x[i, s] <= sum_s s * x[j, s]          per ogni arco (i, j)
 
 Il vincolo (3) confronta direttamente il numero di stazione di i e di j: un
-solo vincolo per arco, contro gli m per arco di Bowman-White e Ritt & Costa.
+solo vincolo per arco, contro gli m per arco di Ritt & Costa.
 Modello più compatto, rilassamento più debole.
 """
 
