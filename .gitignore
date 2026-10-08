@@ -14,8 +14,5 @@ instances_demo/
 results/demo_*.csv
 results/figures_demo_*/
 
-#Temporaneo
-instances/
-instances_pilot/
-results/pilot.csv
+
 
