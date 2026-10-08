@@ -101,15 +101,65 @@ def simple_lower_bound(instance: ALBInstance) -> int:
     return best
 
 
-def lower_bound(
+def _recursive_heads(times, order, related, c: int) -> list[int]:
+    """Teste (o code) ricorsive per il tempo ciclo c (Johnson, 1988).
+
+    Per le code: order è l'ordine topologico inverso e related(j) i successori
+    di j. Presi i successori in ordine di coda decrescente h_1, h_2, ..., per
+    ogni k i primi k vanno eseguiti tutti dopo j, e dopo l'ultimo di loro
+    resta almeno la coda più piccola del gruppo:
+
+        coda_j >= t_h1 + ... + t_hk + coda_hk        per ogni k
+
+    Arrotondamento: se nella stazione in cui cadrebbe la fine di j non resta
+    spazio per j stesso, j sta in una stazione precedente e la coda sale al
+    multiplo di c successivo. Per le teste: ordine topologico e predecessori.
+    """
+    value = [0] * len(times)
+    for j in order:
+        best, total = 0, 0
+        for h in sorted(related(j), key=lambda h: -value[h]):
+            total += times[h]
+            best = max(best, total + value[h])
+        rest = -best % c                 # spazio libero nell'ultima stazione toccata
+        if rest < times[j]:              # j non ci entra: stazione successiva
+            best += rest
+        value[j] = best
+    return value
+
+
+def cycle_time_excluded(instance: ALBInstance, graph: PrecedenceGraph, c: int) -> bool:
+    """True se nessuna soluzione può avere carico massimo <= c.
+
+    c è escluso se per qualche task j
+        testa_j + t_j + coda_j > m * c      oppure      E_j(c) > L_j(c),
+    con E_j e L_j calcolate da teste e code ricorsive invece che dalle somme
+    di tutti i predecessori e successori (vedi StationBounds).
+    """
+    t, m = instance.task_times, instance.m_stations
+    topo = graph.topological_order
+    head = _recursive_heads(t, topo, graph.all_predecessors, c)
+    tail = _recursive_heads(t, reversed(topo), graph.all_successors, c)
+    for j in range(instance.n_tasks):
+        if head[j] + t[j] + tail[j] > m * c:
+            return True
+        if _ceil_div(head[j] + t[j], c) > m + 1 - _ceil_div(t[j] + tail[j], c):
+            return True
+    return False
+
+
+def window_lower_bound(
     instance: ALBInstance,
     graph: PrecedenceGraph | None = None,
     upper_bound: int | None = None,
 ) -> int:
-    """Lower bound sul carico massimo ottimo.
+    """Lower bound con le finestre di stazione semplici.
 
-    Parte dai bound combinatori e poi lo alza finché le finestre di stazione
-    non sono tutte non vuote (vedi StationBounds.windows_nonempty).
+    Parte dai bound combinatori (simple_lower_bound) e lo alza finché le
+    finestre di stazione non sono tutte non vuote
+    (StationBounds.windows_nonempty). Veloce ma debole quando le precedenze
+    sono dense. È il bound usato nella prima esecuzione della campagna;
+    ora è la prima fase di lower_bound.
     upper_bound serve solo a fermare la ricerca: non si va oltre.
     """
     graph = graph or PrecedenceGraph(instance)
@@ -117,6 +167,27 @@ def lower_bound(
     lb = simple_lower_bound(instance)
     stop = upper_bound if upper_bound is not None else instance.total_time
     while lb < stop and not sb.windows_nonempty(lb):
+        lb += 1
+    return lb
+
+
+def lower_bound(
+    instance: ALBInstance,
+    graph: PrecedenceGraph | None = None,
+    upper_bound: int | None = None,
+) -> int:
+    """Lower bound sul carico massimo ottimo, usato da tutti i metodi.
+
+    Parte da window_lower_bound e lo alza finché c è escluso da
+    cycle_time_excluded, con teste e code ricorsive: più forte quando le
+    precedenze sono dense. Ogni c scartato è irraggiungibile, quindi il
+    risultato è un bound valido.
+    upper_bound serve solo a fermare la ricerca: non si va oltre.
+    """
+    graph = graph or PrecedenceGraph(instance)
+    lb = window_lower_bound(instance, graph, upper_bound)
+    stop = upper_bound if upper_bound is not None else instance.total_time
+    while lb < stop and cycle_time_excluded(instance, graph, lb):
         lb += 1
     return lb
 

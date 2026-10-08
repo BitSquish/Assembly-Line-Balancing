@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.bounds import StationBounds, greedy_solution, lower_bound, simple_lower_bound
+from src.bounds import StationBounds, greedy_solution, lower_bound, simple_lower_bound, window_lower_bound
 from src.graph import PrecedenceGraph
 from src.instance import ALBInstance
 from src.solution import is_feasible
@@ -37,3 +37,11 @@ def test_bound_validi_su_istanze_casuali():
         greedy = greedy_solution(inst, g)
         assert is_feasible(greedy)
         assert simple_lower_bound(inst) <= lower_bound(inst, g) <= opt <= greedy.max_load
+
+def test_bound_ricorsivo_valido_su_istanze_casuali():
+    for p in (0.3, 0.6, 0.9):
+        for seed in range(40):
+            inst = random_instance(seed, p=p)
+            g = PrecedenceGraph(inst)
+            opt = brute_force_optimum(inst)
+            assert window_lower_bound(inst, g) <= lower_bound(inst, g) <= opt
