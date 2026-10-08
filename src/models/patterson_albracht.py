@@ -6,6 +6,13 @@ Riferimenti:
         23(1), 166-172.
     Formulazione PA come riportata in Ritt & Costa (2018), eq. (21).
 
+Il contributo di Patterson & Albracht (1975) usato qui è il vincolo di
+precedenza (3) e le finestre di stazione E_i, L_i: entrambi non dipendono dal
+tipo di problema e valgono per il SALBP-1 come per il SALBP-2. L'articolo li
+usa per il SALBP-1 (tempo ciclo fissato, minimo numero di stazioni); qui sono
+inseriti nel modello base del SALBP-2 (c variabile, carico di ogni stazione
+<= c, min c), come nella formulazione PA-2 di Ritt & Costa (2018, tab. 2).
+
 Notazione (stazioni 1..m, task 0-based):
     x[i, s] in {0,1}   task i nella stazione s, solo per s in [E_i(c_max), L_i(c_max)]
     c                  tempo ciclo (carico massimo)

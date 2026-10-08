@@ -27,11 +27,13 @@ Tempi (interi, tra t_min e t_max):
       dell'intervallo, altrimenti un tempo "lungo" nell'ultimo terzo. Molte
       operazioni corte e poche lunghe rendono più difficile bilanciare.
 
-Il controllo diretto dell'OS segue l'impostazione di SALBPGen: 
-Otto, A., Otto, C., & Scholl, A. (2013). Systematic data
-generation and test design for solution algorithms on the example of SALBPGen
-for assembly line balancing. European Journal of Operational Research, 228(1).
-Le distribuzioni dei tempi sono una scelta del progetto.
+Il passo che porta l'OS al valore obiettivo, aggiungendo archi casuali uno
+alla volta, è lo stesso di SALBPGen: Otto, A., Otto, C., & Scholl, A. (2013).
+Systematic data generation and test design for solution algorithms on the
+example of SALBPGen for assembly line balancing. European Journal of
+Operational Research, 228(1). A differenza di SALBPGen non si costruisce prima
+il grafo a stadi e non si controllano catene e colli di bottiglia. Le
+distribuzioni dei tempi sono una scelta del progetto.
 """
 
 from __future__ import annotations

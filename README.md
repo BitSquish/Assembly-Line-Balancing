@@ -82,8 +82,11 @@ stazione, mai raggiunto nella campagna (vedi la docstring di `hoffmann.py`).
 Generate da `src/generator.py`, che controlla direttamente l'**order strength**
 (OS): la frazione di coppie di task il cui ordine è fissato dalle precedenze,
 dirette o indirette. Il generatore aggiunge archi *u* → *v* con *u* < *v* finché
-l'OS raggiunge l'obiettivo (tolleranza 0,02). Ogni istanza è riproducibile: il
-seed dipende solo dal seed di base, dal gruppo e dall'indice.
+l'OS raggiunge l'obiettivo (tolleranza 0,02). 
+È lo stesso passo finale del generatore SALBPGen (Otto et al., 2013), che però
+costruisce prima il grafo a stadi e può inserire catene e colli di bottiglia;
+il generatore del progetto parte invece da un grafo vuoto.
+Ogni istanza è riproducibile: il seed dipende solo dal seed di base, dal gruppo e dall'indice.
 
 Disegno sperimentale (`configs/design.json`): fattoriale completo su tre fattori,
 **25 istanze per combinazione, 36 combinazioni, 900 istanze**.
@@ -101,10 +104,16 @@ Da dove vengono le scelte:
 - *n* = 200 è una scelta del progetto (Otto et al. arrivano a 1000 task).
 - I tempi dei task, interi uniformi tra 1 e 100, sono una scelta del progetto.
 - Il numero di stazioni in proporzione a *n* è una scelta del progetto. Otto et al.
-  controllano la difficoltà attraverso il rapporto tra tempi dei task e tempo
-  ciclo; nel SALBP-2 il tempo ciclo non è un dato, e il numero di stazioni ne fa
-  le veci: tante stazioni significano task lunghi rispetto al carico di stazione,
-  cioè istanze più difficili (si veda anche Álvarez-Miranda et al., 2023).
+  controllano la difficoltà attraverso i tempi dei task rispetto al tempo ciclo;
+  nel SALBP-2 il tempo ciclo non è un dato, e il numero di stazioni ne fa le veci.
+  Álvarez-Miranda et al. (2023) usano lo stesso parametro (numero atteso di task
+  per stazione) e mostrano che l'impacchettamento dei task è la principale fonte
+  di difficoltà: le istanze di Otto et al. ancora aperte hanno tutte circa due
+  task per stazione.
+- *n* = 200 è una scelta del progetto; Álvarez-Miranda et al. (2023) osservano che i
+  metodi esatti iniziano a fallire intorno ai 100 task.
+- Otto et al. distinguono anche grafi con molte catene o colli di bottiglia;
+  il progetto usa un solo tipo di grafo, senza questo controllo.
 
 Il generatore prevede anche tempi bimodali (80% task corti, 20% lunghi), usabili
 dal menù ma non inclusi nel disegno.
@@ -320,8 +329,7 @@ highs_bug_report/     file del problema segnalato a HiGHS
 
 ## Riferimenti
 
-- Álvarez-Miranda, E., Pereira, J., & Vilà, M. (2023). Analysis of the simple assembly line balancing problem complexity. *Computers & Operations Research*, 159.
-- Hoffmann, T. R. (1963). Assembly line balancing with a precedence matrix. *Management Science*, 9(4).
+- Álvarez-Miranda, E., Pereira, J., & Vilà, M. (2023). Analysis of the simple assembly line balancing problem complexity. *Computers & Operations Research*, 159, 106323.- Hoffmann, T. R. (1963). Assembly line balancing with a precedence matrix. *Management Science*, 9(4).
 - Johnson, R. V. (1988). Optimally balancing large assembly lines with "FABLE". *Management Science*, 34(2).
 - Klein, R., & Scholl, A. (1996). Maximizing the production rate in simple assembly line balancing — A branch and bound procedure. *European Journal of Operational Research*, 91(2).
 - McNaughton, R. (1959). Scheduling with deadlines and loss functions. *Management Science*, 6(1).
