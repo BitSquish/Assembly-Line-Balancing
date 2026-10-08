@@ -19,7 +19,7 @@ n20_os0.6_r6_uniform,20,0.6,6,uniform,patterson_albracht,25,100.0,0.02,0.0,0
 n20_os0.6_r6_uniform,20,0.6,6,uniform,ritt_costa,25,100.0,0.03,0.0,0
 n20_os0.6_r10_uniform,20,0.6,10,uniform,patterson_albracht,25,100.0,0.01,0.0,0
 n20_os0.6_r10_uniform,20,0.6,10,uniform,ritt_costa,25,100.0,0.02,0.0,0
-n20_os0.9_r3_uniform,20,0.9,3,uniform,patterson_albracht,25,100.0,0.02,0.0,0
+n20_os0.9_r3_uniform,20,0.9,3,uniform,patterson_albracht,25,100.0,0.03,0.0,0
 n20_os0.9_r3_uniform,20,0.9,3,uniform,ritt_costa,25,100.0,0.05,0.0,0
 n20_os0.9_r6_uniform,20,0.9,6,uniform,patterson_albracht,25,100.0,0.01,0.0,0
 n20_os0.9_r6_uniform,20,0.9,6,uniform,ritt_costa,25,100.0,0.01,0.0,0
@@ -29,11 +29,11 @@ n50_os0.6_r6_uniform,50,0.6,6,uniform,patterson_albracht,25,100.0,6.39,0.0,0
 n50_os0.6_r6_uniform,50,0.6,6,uniform,ritt_costa,25,96.0,12.4,0.01,0
 n50_os0.6_r10_uniform,50,0.6,10,uniform,patterson_albracht,25,100.0,0.36,0.0,0
 n50_os0.6_r10_uniform,50,0.6,10,uniform,ritt_costa,25,100.0,0.37,0.0,0
-n50_os0.9_r3_uniform,50,0.9,3,uniform,patterson_albracht,25,100.0,3.13,0.0,0
-n50_os0.9_r3_uniform,50,0.9,3,uniform,ritt_costa,25,100.0,0.91,0.0,0
+n50_os0.9_r3_uniform,50,0.9,3,uniform,patterson_albracht,25,100.0,3.02,0.0,0
+n50_os0.9_r3_uniform,50,0.9,3,uniform,ritt_costa,25,100.0,0.92,0.0,0
 n50_os0.9_r6_uniform,50,0.9,6,uniform,patterson_albracht,25,100.0,0.14,0.0,0
 n50_os0.9_r6_uniform,50,0.9,6,uniform,ritt_costa,25,100.0,0.13,0.0,0
-n50_os0.9_r10_uniform,50,0.9,10,uniform,patterson_albracht,25,100.0,0.04,0.0,0
+n50_os0.9_r10_uniform,50,0.9,10,uniform,patterson_albracht,25,100.0,0.03,0.0,0
 n50_os0.9_r10_uniform,50,0.9,10,uniform,ritt_costa,25,100.0,0.05,0.0,0
 n100_os0.2_r3_uniform,100,0.2,3,uniform,patterson_albracht,25,0.0,180.38,1.5,0
 n100_os0.2_r3_uniform,100,0.2,3,uniform,ritt_costa,25,0.0,181.21,1.6,0
@@ -59,7 +59,7 @@ n200_os0.2_r6_uniform,200,0.2,6,uniform,patterson_albracht,25,0.0,180.76,0.48,0
 n200_os0.2_r6_uniform,200,0.2,6,uniform,ritt_costa,25,0.0,182.4,0.94,0
 n200_os0.2_r10_uniform,200,0.2,10,uniform,patterson_albracht,25,88.0,77.74,0.02,0
 n200_os0.2_r10_uniform,200,0.2,10,uniform,ritt_costa,25,44.0,136.05,0.13,0
-n200_os0.6_r3_uniform,200,0.6,3,uniform,patterson_albracht,25,0.0,180.85,2.81,0
+n200_os0.6_r3_uniform,200,0.6,3,uniform,patterson_albracht,25,0.0,180.99,2.81,0
 n200_os0.6_r3_uniform,200,0.6,3,uniform,ritt_costa,25,0.0,186.55,4.21,0
 n200_os0.6_r6_uniform,200,0.6,6,uniform,patterson_albracht,25,0.0,180.53,0.82,0
 n200_os0.6_r6_uniform,200,0.6,6,uniform,ritt_costa,25,0.0,181.6,0.88,0

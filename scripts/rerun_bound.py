@@ -41,8 +41,8 @@ from src.instance import ALBInstance
 
 MANIFEST = Path("instances/manifest.csv")
 RESULTS = Path("results/results.csv")
-BACKUP = Path("results/results_bound_semplice.csv")
-CHANGED = Path("results/bound_cambiato.csv")
+BACKUP = Path("results/storico/results_bound_semplice.csv")
+CHANGED = Path("results/storico/bound_cambiato.csv")
 
 
 def read_csv(path: Path) -> tuple[list[str], list[dict]]:
