@@ -110,8 +110,6 @@ Da dove vengono le scelte:
   per stazione) e mostrano che l'impacchettamento dei task è la principale fonte
   di difficoltà: le istanze di Otto et al. ancora aperte hanno tutte circa due
   task per stazione.
-- *n* = 200 è una scelta del progetto; Álvarez-Miranda et al. (2023) osservano che i
-  metodi esatti iniziano a fallire intorno ai 100 task.
 - Otto et al. distinguono anche grafi con molte catene o colli di bottiglia;
   il progetto usa un solo tipo di grafo, senza questo controllo.
 

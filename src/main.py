@@ -1,7 +1,7 @@
 """Menù principale del progetto SALBP-2.
 
 Uso (dalla cartella del progetto):
-    python main.py
+    python -m src.main.py
 
     1) Tutti gli esperimenti: la campagna completa definita in configs/design.json.
     2) Demo rapida: tre istanze da 50 task, tutti i metodi, 15 secondi per ogni PLI
@@ -143,7 +143,7 @@ def duration(groups: list[dict], per_group: int, methods: list[str],
     n_heur = len(methods) - n_pli
     worst = estimate = 0.0
     for g in groups:
-        count = g.get("instances", per_group)
+        count = per_group
         runs = count * n_pli
         share = timeout_share(g)
         worst += runs * time_limit
@@ -231,8 +231,6 @@ def ask_int(prompt: str, default: int, low: int, high: int) -> int:
 def print_groups(groups: list[dict], notes: list[str] | None = None) -> None:
     for k, g in enumerate(groups):
         note = f"  {Style.DIM}({notes[k]}){Style.RESET}" if notes else ""
-        if "instances" in g:
-            note += f"  {Style.DIM}({g['instances']} istanze){Style.RESET}"
         print(f"  {Style.CYAN}-{Style.RESET} {group_name(g):26s} task = {g['n']:<4d} "
               f"stazioni = {stations(g):<3d} OS = {g['order_strength']:<4g} "
               f"tempi = {g['time_dist']}{note}")
@@ -387,9 +385,9 @@ def campaign() -> None:
     estimate, worst = duration(groups, per_group, methods, CAMPAIGN_TIME_LIMIT)
 
     print(f"\n{Style.BOLD}Campagna completa ({DESIGN}){Style.RESET}")
-    total = sum(g.get("instances", per_group) for g in groups)
+    total = len(groups) * per_group 
     print(f"{Style.DIM}Gruppi: {len(groups)} | Istanze per gruppo: {per_group} "
-          f"(salvo dove indicato) | Totale: {total} istanze{Style.RESET}")
+          f"( Totale: {total} istanze{Style.RESET}")
     print_groups(groups)
     print(f"\n{Style.BOLD}Metodi:{Style.RESET} {', '.join(LABELS.get(m, m) for m in methods)}")
     print(f"{Style.BOLD}Limite di tempo:{Style.RESET} {CAMPAIGN_TIME_LIMIT:g} secondi per ogni PLI")

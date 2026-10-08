@@ -53,7 +53,7 @@ def main() -> None:
     for g in groups_from_config(cfg):
         gname = group_name(g)
         m = max(2, round(g["n"] / g["tasks_per_station"]))
-        count = g.get("instances", cfg["instances_per_group"])
+        count = cfg["instances_per_group"]
         for k in range(count):
             # Seed stabile: dipende solo da configurazione, gruppo e indice.
             seed = zlib.crc32(f"{cfg['base_seed']}|{gname}|{k}".encode())
