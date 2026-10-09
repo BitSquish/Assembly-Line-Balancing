@@ -15,8 +15,8 @@ punto di partenza della ricerca del tempo ciclo nelle euristiche. Quindi:
   - i PLI si rieseguono solo nelle istanze in cui il valore del bound cambia:
     nelle altre il modello è identico.
 
-prepare: copia results.csv in results/results_bound_semplice.csv, scrive in
-results/bound_cambiato.csv le istanze in cui il bound cambia e toglie da
+prepare: copia results.csv in results/storico/results_bound_semplice.csv, scrive in
+results/storico/bound_cambiato.csv le istanze in cui il bound cambia e toglie da
 results.csv le righe da rifare. run_experiments salta le righe presenti,
 quindi riesegue solo quelle tolte. --extra aggiunge singole esecuzioni da
 rifare (per esempio una riga anomala).

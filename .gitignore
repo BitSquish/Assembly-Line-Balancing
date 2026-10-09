@@ -1,6 +1,7 @@
 # File del solver e log
 *.mps
 *.log
+!highs_bug_report/*.mps
 
 # Python cache e virtual environment
 __pycache__/

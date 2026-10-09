@@ -1,5 +1,6 @@
 {
-  "description": "Disegno sperimentale. Numero di task 20, 50 e 100, order strength 0.2, 0.6 e 0.9 e 25 istanze per combinazione seguono Otto, Otto & Scholl (2013), EJOR 228(1). Scelte del progetto: n = 200 (Otto et al. arrivano a 1000 task); tempi interi uniformi tra 1 e 100; numero di stazioni m = n / 3 (tante), n / 6 (medie) o n / 10 (poche), che sostituisce il rapporto tra tempi dei task e tempo ciclo, non noto nel SALBP-2.",  "base_seed": 2026,
+  "description": "Disegno sperimentale. Numero di task 20, 50 e 100, order strength 0.2, 0.6 e 0.9 e 25 istanze per combinazione seguono Otto, Otto & Scholl (2013), EJOR 228(1). Scelte del progetto: n = 200 (Otto et al. arrivano a 1000 task); tempi interi uniformi tra 1 e 100; numero di stazioni m = n / 3 (tante), n / 6 (medie) o n / 10 (poche), che sostituisce il rapporto tra tempi dei task e tempo ciclo, non noto nel SALBP-2.",  
+  "base_seed": 2026,
   "instances_per_group": 25,
   "t_min": 1,
   "t_max": 100,

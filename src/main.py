@@ -1,7 +1,7 @@
 """Menù principale del progetto SALBP-2.
 
 Uso (dalla cartella del progetto):
-    python -m src.main.py
+    python -m src.main
 
     1) Tutti gli esperimenti: la campagna completa definita in configs/design.json.
     2) Demo rapida: tre istanze da 50 task, tutti i metodi, 15 secondi per ogni PLI
@@ -34,8 +34,11 @@ from scripts.run_experiments import FIELDS, METHODS
 from src.generator import generate
 from src.graph import PrecedenceGraph
 
-# Abilita i colori ANSI su Windows (Terminale/PowerShell)
-os.system('')
+try:
+    from colorama import just_fix_windows_console
+    just_fix_windows_console()       # abilita i codici ANSI nella console di Windows
+except ImportError:
+    pass                             # senza colorama: colori corretti nei terminali moderni
 
 
 class Style:
@@ -135,9 +138,11 @@ def timeout_share(g: dict) -> float:
     n = _SHARE_N[nearest(_SHARE_N, g["n"])]
     return _SHARE[n][nearest(_SHARE_R, g["tasks_per_station"])][nearest(_SHARE_OS, g["order_strength"])]
 
-def duration(groups: list[dict], per_group: int, methods: list[str],
-             time_limit: float) -> tuple[float, float]:
-    """(durata stimata, durata massima) in secondi.  
+def duration(groups: list[dict], per_group: int, methods: list[str], time_limit: float) -> tuple[float, float]:
+    """
+    Stima la durata totale di un insieme di esperimenti, considerando sia la durata stimata che quella massima.
+    (durata stimata, durata massima) in secondi.  
+    
     """
     n_pli = sum(m in PLI for m in methods)
     n_heur = len(methods) - n_pli
@@ -387,7 +392,7 @@ def campaign() -> None:
     print(f"\n{Style.BOLD}Campagna completa ({DESIGN}){Style.RESET}")
     total = len(groups) * per_group 
     print(f"{Style.DIM}Gruppi: {len(groups)} | Istanze per gruppo: {per_group} "
-          f"( Totale: {total} istanze{Style.RESET}")
+          f"| Totale: {total} istanze{Style.RESET}")    
     print_groups(groups)
     print(f"\n{Style.BOLD}Metodi:{Style.RESET} {', '.join(LABELS.get(m, m) for m in methods)}")
     print(f"{Style.BOLD}Limite di tempo:{Style.RESET} {CAMPAIGN_TIME_LIMIT:g} secondi per ogni PLI")

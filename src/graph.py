@@ -8,7 +8,7 @@ quindi la si fa una volta sola qui e la si riusa.
 
 Le operazioni esposte da questa classe sono tutte ricorrenti in letteratura
 e servono a valle di questo modulo:
-     - chiusura transitiva  -> finestre di stazione E_i, L_i e lower bound
+    - chiusura transitiva  -> finestre di stazione E_i, L_i e lower bound
       (bounds.py);
     - riduzione transitiva -> elimina archi ridondanti nei vincoli di
       precedenza dei modelli PLI (un arco deducibile da altri due non va

@@ -18,18 +18,27 @@ ciclo della linea). Esempio: con carichi 10, 12 e 9 il valore della soluzione è
 
 ### Bound (`src/bounds.py`)
 
-**Lower bound**, usato da tutti i metodi, calcolato in tre passi:
+**Lower bound**, usato da tutti i metodi (definizioni come in Scholl & Becker,
+2006, sez. 3.1 e 4.1):
 
-1. **Bound combinatori:** carico medio ⌈Σ tᵢ / m⌉ (LC1) e principio dei cassetti
-   sui task più lunghi (LC2): tra i *k·m* + 1 task più lunghi, almeno *k* + 1
-   stanno nella stessa stazione.
-2. **Finestre di stazione semplici:** per un tempo ciclo *c*, il task *i* non può
-   stare prima della stazione E_i(c) = ⌈(tᵢ + tempi di tutti i predecessori) / c⌉
-   né dopo L_i(c) = m + 1 − ⌈(tᵢ + tempi di tutti i successori) / c⌉. Si alza *c*
-   finché tutte le finestre sono non vuote.
-3. **Teste e code ricorsive** (Johnson, 1988): le stesse finestre, calcolate con
-   un limite più stretto sul tempo che deve precedere e seguire ogni task. Si
-   alza *c* finché nessun task viola il test.
+1. **LC1** (McNaughton, 1959): max{t_max, ⌈Σ tᵢ / m⌉}.
+2. **LC2** (Klein & Scholl, 1996): tra i *k·m* + 1 task più lunghi almeno *k* + 1
+   stanno nella stessa stazione, quindi *c* è almeno la somma dei *k* + 1 più
+   corti tra questi.
+3. **LC3** (Scholl, 1999): per un tempo ciclo di prova *c*, ogni task *j* deve
+   stare tra le stazioni E_j(c) = ⌈a_j + p_j⌉ e L_j(c) = m + 1 − ⌈p_j + n_j⌉,
+   con p_j = t_j / c e a_j, n_j testa e coda del task (stazioni richieste da
+   predecessori e successori). Se per qualche task E_j(c) > L_j(c), *c* è
+   irraggiungibile e si passa a *c* + 1.
+
+LC3 è calcolato in due fasi: prima con teste e code semplici (somma dei tempi di
+tutti i predecessori e successori, come nelle finestre di Patterson & Albracht,
+1975), poi con teste e code ricorsive secondo il bound di scheduling su macchina
+singola di Johnson (1988), con la regola di arrotondamento di Scholl & Becker
+(2006, sez. 3.1.2). Rispetto a Johnson non si applicano ai sottoproblemi anche i
+bound di conteggio: il calcolo è più semplice e il bound può essere più debole,
+ma resta valido. Sull'esempio numerico di Scholl & Becker (2006, fig. 3, m = 5)
+l'implementazione dà LC3 = 12, come nell'articolo.
 
 Ogni valore di *c* scartato è irraggiungibile da qualsiasi soluzione, quindi il
 risultato è un lower bound valido. La validità è verificata nei test contro
@@ -44,19 +53,25 @@ combinatorio e quello restituito dal solver.
 ### Modelli PLI (`src/models/`)
 
 I due modelli condividono le variabili *x[i, s]* (task *i* nella stazione *s*),
-le finestre di stazione e i bound su *c*. Differiscono nella formulazione delle
-precedenze, secondo la classificazione di Ritt & Costa (2018).
+le finestre di stazione e i bound su *c*. Differiscono nella formulazione delle precedenze e nei limiti di stazione,
+secondo la classificazione di Ritt & Costa (2018).
 
 | Modello | File | Precedenze per l'arco (*i*, *j*) |
 | --- | --- | --- |
 | Patterson & Albracht (1975) | `patterson_albracht.py` | Σₛ s·x[i,s] ≤ Σₛ s·x[j,s]: un vincolo per arco |
 | Ritt & Costa (2018) | `ritt_costa.py` | Σ_{s≤k} x[i,s] ≥ Σ_{s≤k} x[j,s] per ogni stazione k, più variabili sul tempo ciclo e tagli sulle finestre di stazione |
 
-Il primo è la formulazione più compatta, il secondo quella con il rilassamento
-lineare più forte. Entrambi usano le stesse finestre di stazione, gli stessi
-bound e la riduzione transitiva degli archi, quindi il confronto misura la
-formulazione e non il pre-processing. Con 200 task, Patterson & Albracht ha in
-media circa 740 vincoli, Ritt & Costa circa 12.000.
+Nella notazione di Ritt & Costa (2018, tab. 2) i due modelli sono **PA2-2** e
+**NF4-2**, e differiscono sia nei vincoli di precedenza sia nei limiti di
+stazione: Patterson & Albracht usa solo le finestre statiche
+[E_i(c_max), L_i(c_max)], Ritt & Costa aggiunge le variabili sul tempo ciclo e i
+tagli sulle finestre (eq. 16-18, 24 e 25). Ritt & Costa dimostrano che i loro
+vincoli di precedenza dominano strettamente quelli di Patterson & Albracht
+(prop. 2); osservano anche che limiti di stazione come quelli di NF4 rendono più
+difficile trovare buone soluzioni ammissibili. Il confronto del progetto misura
+quindi la combinazione dei due elementi. Entrambi i modelli usano gli stessi
+bound su *c* e la riduzione transitiva degli archi. Con 200 task, Patterson &
+Albracht ha in media circa 740 vincoli, Ritt & Costa circa 12.000.
 
 I modelli sono scritti con PuLP e risolti con Gurobi.
 
@@ -193,10 +208,9 @@ euristiche anche la costruzione del grafo e il calcolo del lower bound.
 
 ### Storia della campagna
 
-La campagna è stata eseguita prima con il lower bound dei passi 1 e 2. L'analisi
-dei risultati ha mostrato che a OS 0,9 quel bound era debole: coincideva con
-l'ottimo solo nel 14% delle istanze chiuse, contro il 92% a OS 0,2. È stato
-quindi aggiunto il passo 3.
+La campagna è stata eseguita prima Differiscono nella formulazione delle precedenze e nei limiti di stazione. 
+L'analisi dei risultati ha mostrato che a OS 0,9 quel bound era debole: coincideva con
+l'ottimo solo nel 14% delle istanze chiuse, contro il 92% a OS 0,2. Sono state quindi aggiunte teste e code ricorsive.
 
 Il bound entra nei metodi solo come valore (estremo inferiore di *c* nei PLI,
 punto di partenza della ricerca nelle euristiche), quindi sono state rieseguite
@@ -255,7 +269,7 @@ Osservazioni:
 - **Patterson & Albracht contro Ritt & Costa.** Ritt & Costa dimostra l'ottimo in
   più istanze (53 chiuse solo da Ritt & Costa, 28 solo da Patterson & Albracht),
   con il vantaggio maggiore a OS 0,9. Patterson & Albracht trova più spesso la
-  soluzione migliore (131 istanze contro 78).
+  soluzione migliore (131 istanze contro 78), coerente con quanto osservano Ritt & Costa sui limiti di stazione di tipo 4.
 - **Hoffmann contro il miglior PLI** (istanze in cui Hoffmann è migliore / uguale /
   peggiore):
 
@@ -327,11 +341,13 @@ highs_bug_report/     file del problema segnalato a HiGHS
 
 ## Riferimenti
 
-- Álvarez-Miranda, E., Pereira, J., & Vilà, M. (2023). Analysis of the simple assembly line balancing problem complexity. *Computers & Operations Research*, 159, 106323.- Hoffmann, T. R. (1963). Assembly line balancing with a precedence matrix. *Management Science*, 9(4).
-- Johnson, R. V. (1988). Optimally balancing large assembly lines with "FABLE". *Management Science*, 34(2).
-- Klein, R., & Scholl, A. (1996). Maximizing the production rate in simple assembly line balancing — A branch and bound procedure. *European Journal of Operational Research*, 91(2).
-- McNaughton, R. (1959). Scheduling with deadlines and loss functions. *Management Science*, 6(1).
+- Álvarez-Miranda, E., Pereira, J., & Vilà, M. (2023). Analysis of the simple assembly line balancing problem complexity. *Computers & Operations Research*, 159, 106323.
+- Hoffmann, T. R. (1963). Assembly line balancing with a precedence matrix. *Management Science*, 9, 551–562.
+- Johnson, R. V. (1988). Optimally balancing large assembly lines with "FABLE". *Management Science*, 34, 240–253.
+- Klein, R., & Scholl, A. (1996). Maximizing the production rate in simple assembly line balancing — A branch and bound procedure. *European Journal of Operational Research*, 91, 367–385.
+- McNaughton, R. (1959). Scheduling with deadlines and loss functions. *Management Science*, 6, 1–12.
 - Otto, A., Otto, C., & Scholl, A. (2013). Systematic data generation and test design for solution algorithms on the example of SALBPGen for assembly line balancing. *European Journal of Operational Research*, 228(1), 33–45.
-- Patterson, J. H., & Albracht, J. J. (1975). Assembly-line balancing: zero-one programming with Fibonacci search. *Operations Research*, 23(1), 166–172.
+- Patterson, J. H., & Albracht, J. J. (1975). Technical Note — Assembly-line balancing: zero-one programming with Fibonacci search. *Operations Research*, 23(1), 166–172.
 - Ritt, M., & Costa, A. M. (2018). Improved integer programming models for simple assembly line balancing and related problems. *International Transactions in Operational Research*. DOI 10.1111/itor.12206.
+- Scholl, A. (1999). *Balancing and Sequencing of Assembly Lines* (2ª ed.). Physica-Verlag.
 - Scholl, A., & Becker, C. (2006). State-of-the-art exact and heuristic solution procedures for simple assembly line balancing. *European Journal of Operational Research*, 168(3), 666–693.
