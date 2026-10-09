@@ -23,6 +23,8 @@ Notazione (stazioni 1..m, task 0-based):
 
 Le variabili x[i, s] fuori dalla finestra statica non vengono create: le
 somme le omettono semplicemente.
+
+Nella notazione di Ritt & Costa (2018, tab. 2) è la formulazione NF4-2.
 """
 
 
