@@ -15,6 +15,7 @@ nella cartella --out:
                               valore noto
     confronto_euristiche.csv  gruppi contro Hoffmann: vittorie, pareggi, sconfitte
                               e test di Wilcoxon (se scipy è installato)
+    tabella_distribuzioni_100.csv  a 100 task: riepilogo per metodo, tempi uniformi e bimodali                          
     pli_ottimi.png            % di istanze risolte all'ottimo dimostrato
     pli_tempi.png             tempo medio di calcolo
     pli_gap.png               gap medio tra soluzione e lower bound al termine
@@ -22,11 +23,12 @@ nella cartella --out:
     euristiche_migliore.png   % di istanze in cui l'euristica eguaglia il miglior
                               valore noto
     euristiche_ottimo.png     % di istanze con ottimo noto in cui l'euristica lo raggiunge;
+    distribuzioni_*.png            a 100 task: gli stessi grafici, una colonna per distribuzione
 
 Ogni grafico è una griglia di pannelli che segue il disegno sperimentale: una
 colonna per numero di task, una riga per order strength; dentro ogni pannello,
-un gruppo di barre per numero di stazioni e una barra per metodo. I gruppi fuori
-dal disegno fattoriale compaiono solo nelle tabelle.
+un gruppo di barre per numero di stazioni e una barra per metodo. I grafici principali usano i soli tempi uniformi; 
+i gruppi con tempi bimodali (100 task) hanno grafici a parte
 
 Riferimento per le euristiche. Per ogni istanza:
     miglior lower bound = massimo dei lower bound di tutti i metodi (ognuno è valido);
@@ -120,8 +122,9 @@ def _os_from_group(group: str) -> float:
 _GROUP_KEYS = ["group", "n", "os_target", "tasks_per_station", "time_dist", "method"]
 
 
-def summary_table(df: pd.DataFrame) -> pd.DataFrame:
-    """Una riga per metodo sul totale, poi una per metodo e numero di task."""
+def summary_table(df: pd.DataFrame, by: str = "n") -> pd.DataFrame:
+    """Una riga per metodo sul totale, poi una per metodo e valore di `by`
+    (numero di task, oppure distribuzione dei tempi)."""
     order = [m for m in METHODS if m in set(df["method"])]
 
     def block(data: pd.DataFrame, label) -> pd.DataFrame:
@@ -136,12 +139,12 @@ def summary_table(df: pd.DataFrame) -> pd.DataFrame:
             ottimo_raggiunto_pct=("reached", lambda x: 100 * x.mean()),
             scarto_da_ottimo_pct=("dev_opt", lambda x: 100 * x.mean()),
         ).reindex(order).dropna(how="all")
-        out.insert(0, "n", label)
+        out.insert(0, by, label)
         return out.reset_index()
 
-    parts = [block(df, "tutti")] + [block(part, int(n)) for n, part in df.groupby("n")]
+    parts = [block(df, "tutti")] if by == "n" else []
+    parts += [block(part, key) for key, part in df.groupby(by)]
     return pd.concat(parts, ignore_index=True).round(2)
-
 
 def pli_table(df: pd.DataFrame) -> pd.DataFrame:
     d = df[df["kind"] == "pli"]
@@ -205,6 +208,7 @@ def heuristic_comparison(df: pd.DataFrame, a: str = "gruppi", b: str = "hoffmann
 
 # ----------------------------------------------------------------- grafici
 
+DIST_LABELS = {"uniform": "uniformi", "bimodal": "bimodali"}
 
 def _fmt(value: float) -> str:
     """Numero con la virgola decimale e senza zeri inutili: 0.2 -> '0,2', 50.0 -> '50'."""
@@ -219,12 +223,13 @@ def plot_grid(
     title: str,
     ylabel: str,
     path: str | Path,
-    agg="mean",
+    columns: str = "n",
     scale: float = 1.0,
     reference_line: float | None = None,
     reference_label: str = "",
 ) -> None:
-    """Griglia di pannelli: colonne = numero di task, righe = order strength.
+    """Griglia di pannelli: colonne = numero di task (o distribuzione dei tempi),
+    righe = order strength.
 
     In ogni pannello un gruppo di barre per numero di stazioni e una barra per
     metodo. L'asse verticale è lo stesso in tutti i pannelli, così le altezze
@@ -234,28 +239,30 @@ def plot_grid(
         data: righe dei risultati (da load_results), già filtrate se serve.
         value: colonna da aggregare (per esempio "time_s", "gap", "dev").
         methods: metodi da disegnare, nell'ordine voluto.
-        agg: aggregazione per (gruppo, metodo): "mean" o una funzione.
+        columns: "n" per una colonna per numero di task, "time_dist" per una
+            colonna per distribuzione dei tempi.
         scale: fattore applicato ai valori (100 per passare a percentuali).
         reference_line: linea orizzontale di riferimento (per esempio il limite di tempo).
     """
-    grid = data[data["time_dist"] == "uniform"]
+    grid = data
     methods = [m for m in methods if m in set(grid["method"])]
     if not methods:
         print(f"  (nessun dato per {Path(path).name}: saltato)")
         return
 
-    ns = sorted(grid["n"].unique())
+    # Tempi uniformi per primi; per il numero di task, ordine crescente.
+    ns = sorted(grid[columns].unique(), key=lambda v: (v != "uniform", v))
     oss = sorted(grid["os_target"].unique())
     ratios = sorted(grid["tasks_per_station"].unique())
-    table = grid.groupby(["os_target", "n", "tasks_per_station", "method"])[value].agg(agg) * scale
-    # Istanze per gruppo, per ogni numero di task (il più frequente tra i suoi gruppi).
-    per_group = grid.groupby(["n", "group"])["instance"].nunique().groupby("n").agg(
+    table = grid.groupby(["os_target", columns, "tasks_per_station", "method"])[value].mean() * scale
+    # Istanze per gruppo, per ogni colonna (il valore più frequente tra i suoi gruppi).
+    per_group = grid.groupby([columns, "group"])["instance"].nunique().groupby(columns).agg(
         lambda s: int(s.mode().iloc[0])
     )
 
     fig, axes = plt.subplots(
         len(oss), len(ns), sharex=True, sharey=True, squeeze=False,
-        figsize=(1.2 + 2.5 * len(ns), 1.6 + 1.9 * len(oss)), facecolor=SURFACE,
+        figsize=(max(9.5, 1.2 + 2.5 * len(ns)), 1.6 + 1.9 * len(oss))
     )
     width = 0.8 / len(methods)
     # Stesso asse verticale in tutti i pannelli, con un margine sopra la barra più alta.
@@ -296,8 +303,8 @@ def plot_grid(
                            zorder=2)
 
             if row == 0:
-                ax.set_title(f"{int(n)} task\n({per_group[n]} istanze per gruppo)",
-                             fontsize=9, color=INK, pad=6)
+                  head = f"{int(n)} task" if columns == "n" else f"tempi {DIST_LABELS.get(n, n)}"
+                  ax.set_title(f"{head}\n({per_group[n]} istanze per gruppo)", fontsize=9, color=INK, pad=6)
             if col == 0:
                 ax.set_ylabel(f"OS {_fmt(os_value)}", fontsize=9, color=INK)
             ax.set_xticks(range(len(ratios)))
@@ -318,8 +325,9 @@ def plot_grid(
     top = 1 - 0.80 / height                 # 0,80 pollici riservati all'intestazione
     fig.suptitle(title, x=0.01, y=1 - 0.08 / height, ha="left", va="top",
                  fontsize=11, color=INK)
-    how_to_read = (f"{ylabel}. Colonne: numero di task. Righe: order strength (OS). "
-                   "Asse orizzontale: numero di stazioni m.")
+    col_text = "numero di task" if columns == "n" else "distribuzione dei tempi"
+    how_to_read = (f"{ylabel}. Colonne: {col_text}. Righe: order strength (OS). "
+                     "Asse orizzontale: numero di stazioni m.")
     if reference_line is not None and reference_label:
         how_to_read += f" Linea tratteggiata: {reference_label}."
     fig.text(0.01, 1 - 0.40 / height, how_to_read,
@@ -341,41 +349,48 @@ def make_all(results: str | Path, out: str | Path, time_limit: float | None = No
     out.mkdir(parents=True, exist_ok=True)
     df = load_results(results)
     print(f"{df['instance'].nunique()} istanze, metodi: {[m for m in METHODS if m in set(df['method'])]}")
-    outside = sorted(df.loc[df["time_dist"] != "uniform", "group"].unique())
-    if outside:
-        print(f"  Gruppi solo nelle tabelle (fuori dalla griglia dei grafici): {outside}")
+    # Analisi principale sul disegno fattoriale (tempi uniformi); i tempi
+    # bimodali, presenti solo a 100 task, hanno un confronto a parte.
+    uni = df[df["time_dist"] == "uniform"]
+    n_dist = df.loc[df["n"] == 100, "time_dist"].nunique()
 
-    summary_table(df).to_csv(out / "tabella_riassunto.csv", index=False)
+    summary_table(uni).to_csv(out / "tabella_riassunto.csv", index=False)
     pli_table(df).to_csv(out / "tabella_pli.csv", index=False)
     heuristic_table(df).to_csv(out / "tabella_euristiche.csv", index=False)
-    comparison = heuristic_comparison(df)
+    comparison = heuristic_comparison(uni)
     if not comparison.empty:
         comparison.to_csv(out / "confronto_euristiche.csv", index=False)
+    if n_dist > 1:
+        summary_table(df[df["n"] == 100], by="time_dist").to_csv(
+            out / "tabella_distribuzioni_100.csv", index=False)
     print(f"  tabelle in {out}")
 
     pli = df[df["kind"] == "pli"].copy()
     pli["optimal"] = pli["status"] == "optimal"
-    plot_grid(pli, "optimal", PLI, scale=100,
-              title="Istanze risolte all'ottimo dimostrato entro il limite di tempo",
-              ylabel="% di istanze", path=out / "pli_ottimi.png")
-    plot_grid(pli, "time_s", PLI,
-              title="Tempo medio di calcolo dei modelli PLI",
-              ylabel="Secondi", path=out / "pli_tempi.png",
-              reference_line=time_limit, reference_label="limite di tempo")
-    plot_grid(pli, "gap", PLI, scale=100,
-              title="Gap medio tra soluzione e lower bound del modello al termine",
-              ylabel="Gap (%)", path=out / "pli_gap.png")
-
     heur = df[df["kind"] == "euristica"].copy()
-    plot_grid(heur, "dev", HEURISTICS, scale=100,
-              title="Scarto medio delle euristiche dal miglior lower bound",
-              ylabel="Scarto (%)", path=out / "euristiche_scarto.png")
-    plot_grid(heur, "is_best", HEURISTICS, scale=100,
-              title="Istanze in cui l'euristica eguaglia il miglior valore noto",
-              ylabel="% di istanze", path=out / "euristiche_migliore.png")
-    plot_grid(heur, "reached", HEURISTICS, scale=100,
-            title="Istanze in cui l'euristica raggiunge l'ottimo (dove l'ottimo è noto)",
-            ylabel="% delle istanze con ottimo noto", path=out / "euristiche_ottimo.png")
+    figures = [
+        (pli, "optimal", PLI, 100, "Istanze risolte all'ottimo dimostrato entro il limite di tempo",
+         "% di istanze", "pli_ottimi", None),
+        (pli, "time_s", PLI, 1, "Tempo medio di calcolo dei modelli PLI",
+         "Secondi", "pli_tempi", time_limit),
+        (pli, "gap", PLI, 100, "Gap medio tra soluzione e lower bound del modello al termine",
+         "Gap (%)", "pli_gap", None),
+        (heur, "dev", HEURISTICS, 100, "Scarto medio delle euristiche dal miglior lower bound",
+         "Scarto (%)", "euristiche_scarto", None),
+        (heur, "is_best", HEURISTICS, 100, "Istanze in cui l'euristica eguaglia il miglior valore noto",
+         "% di istanze", "euristiche_migliore", None),
+        (heur, "reached", HEURISTICS, 100,
+         "Istanze in cui l'euristica raggiunge l'ottimo (dove l'ottimo è noto)",
+         "% delle istanze con ottimo noto", "euristiche_ottimo", None),
+    ]
+    for data, value, methods, scale, title, ylabel, name, ref in figures:
+        extra = {"reference_line": ref, "reference_label": "limite di tempo"} if ref else {}
+        plot_grid(data[data["time_dist"] == "uniform"], value, methods, scale=scale,
+                  title=title, ylabel=ylabel, path=out / f"{name}.png", **extra)
+        if n_dist > 1:
+            plot_grid(data[data["n"] == 100], value, methods, scale=scale, columns="time_dist",
+                      title=f"100 task, tempi uniformi e bimodali. {title}",
+                      ylabel=ylabel, path=out / f"distribuzioni_{name}.png", **extra)
 
 
 def main() -> None:

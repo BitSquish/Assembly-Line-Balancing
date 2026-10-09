@@ -3,8 +3,7 @@
 Uso:
     python -m scripts.gen_instances --config configs/design.json --out instances/
 
-Per ogni gruppo (combinazione dei fattori in "factors", più i gruppi in
-"extra_groups") genera instances_per_group istanze e le salva in
+Per ogni gruppo (combinazione dei fattori in "factors") genera instances_per_group istanze e le salva in
 <out>/<gruppo>/<istanza>.alb. Scrive anche <out>/manifest.csv, con una riga per
 istanza: parametri, seed, OS obiettivo e ottenuta, percorso del file. Lo script
 degli esperimenti legge il manifest.

@@ -68,6 +68,8 @@ DEMO_GROUPS = [
      {"n": 50, "order_strength": 0.9, "tasks_per_station": 3, "time_dist": "uniform"}),
     ("difficile: poche precedenze, tante stazioni",
      {"n": 50, "order_strength": 0.2, "tasks_per_station": 3, "time_dist": "uniform"}),
+    ("grande: 200 task, l'euristica supera i PLI",
+     {"n": 200, "order_strength": 0.2, "tasks_per_station": 6, "time_dist": "uniform"}),
 ]
 
 BASE_SEED = 2026                     # lo stesso di configs/design.json
@@ -142,7 +144,7 @@ def duration(groups: list[dict], per_group: int, methods: list[str], time_limit:
     """
     Stima la durata totale di un insieme di esperimenti, considerando sia la durata stimata che quella massima.
     (durata stimata, durata massima) in secondi.  
-    
+
     """
     n_pli = sum(m in PLI for m in methods)
     n_heur = len(methods) - n_pli
