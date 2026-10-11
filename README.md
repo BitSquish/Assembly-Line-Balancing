@@ -6,13 +6,21 @@ su 1800 istanze generate pseudo-casualmente.
 
 ## Il problema
 
-Una linea di montaggio ha **m stazioni in sequenza**. Ogni task *i* ha un tempo
-*tᵢ* e va assegnato a una sola stazione; le precedenze (*i* → *j*) impongono che
-*i* stia in una stazione uguale o precedente a quella di *j*. Il carico di una
-stazione è la somma dei tempi dei suoi task.
+Una linea di montaggio ha $`m`$ **stazioni in sequenza**. Ogni task $`i`$ ha un
+tempo intero $`t_i`$ e va assegnato a una sola stazione; una precedenza
+$`i \to j`$ impone che $`i`$ stia in una stazione uguale o precedente a quella
+di $`j`$. Il carico di una stazione è la somma dei tempi dei suoi task.
 
-**Obiettivo:** dato *m*, minimizzare il carico massimo di stazione *c* (il tempo
-ciclo della linea). 
+**Obiettivo:** il numero di stazioni $`m`$ è dato; si cerca l'assegnamento dei
+task che rende minimo il carico della stazione più carica. Questo carico si
+chiama **tempo ciclo** $`c`$: è il tempo che ogni stazione ha a disposizione per
+ogni pezzo, quindi la linea produce un pezzo ogni $`c`$ unità di tempo. Ridurre
+$`c`$ significa aumentare la produttività.
+
+Esempio: 3 stazioni con carichi 10, 12 e 9 danno $`c = 12`$, perché la seconda
+stazione rallenta tutta la linea. Spostando un task da 2 unità dalla seconda
+alla terza (se le precedenze lo permettono) i carichi diventano 10, 10 e 11 e
+$`c`$ scende a 11.
 
 ## Metodi
 
@@ -70,14 +78,42 @@ l'ottimo calcolato per enumerazione completa.
 
 ### Modelli PLI (`src/models/`)
 
-I due modelli condividono le variabili *x[i, s]* (task *i* nella stazione *s*),
-le finestre di stazione statiche e i bound su *c*. Differiscono nella
-formulazione delle precedenze; i nomi seguono Ritt & Costa (2018, tab. 2).
+I due modelli condividono la parte di assegnamento. La variabile binaria
+$`x_{is}`$ vale 1 se il task $`i`$ va nella stazione $`s`$, ed è creata solo per
+le stazioni della finestra $`E_i \le s \le L_i`$ calcolata al tempo ciclo
+massimo:
 
-| Modello | File | Precedenze per l'arco (*i*, *j*) |
-| --- | --- | --- |
-| PA2-2, Patterson & Albracht (1975) | `patterson_albracht.py` | Σₛ s·x[i,s] ≤ Σₛ s·x[j,s]: un vincolo per arco |
-| NF4-2, Ritt & Costa (2018) | `ritt_costa.py` | Σ_{s≤k} x[i,s] ≥ Σ_{s≤k} x[j,s] per ogni stazione k, più variabili sul tempo ciclo e tagli sulle finestre di stazione |
+```math
+\min\; c
+\qquad
+\sum_{s} x_{is} = 1 \quad \forall i
+\qquad
+\sum_{i} t_i\, x_{is} \le c \quad \forall s
+\qquad
+\underline{c} \le c \le \overline{c}
+```
+
+dove $`\underline{c}`$ e $`\overline{c}`$ sono il lower bound e l'upper bound
+iniziali. I modelli differiscono nella formulazione delle precedenze; i nomi
+seguono Ritt & Costa (2018, tab. 2).
+
+**PA2-2, Patterson & Albracht (1975)** (`patterson_albracht.py`): un vincolo
+per arco, che confronta l'indice delle due stazioni.
+
+```math
+\sum_{s} s\, x_{is} \;\le\; \sum_{s} s\, x_{js} \qquad \forall\, (i, j)
+```
+
+**NF4-2, Ritt & Costa (2018)** (`ritt_costa.py`): un vincolo per arco e per
+stazione. Entro ogni stazione $`k`$, il task $`j`$ può essere già assegnato
+solo se lo è anche $`i`$.
+
+```math
+\sum_{s \le k} x_{is} \;\ge\; \sum_{s \le k} x_{js} \qquad \forall\, (i, j),\; \forall\, k
+```
+
+A questo si aggiungono variabili sul tempo ciclo e tagli sulle finestre di
+stazione (Ritt & Costa, 2018, eq. 24-25).
 
 Il contributo di Patterson & Albracht (1975) usato qui è il vincolo di
 precedenza e le finestre di stazione. Il loro articolo tratta il SALBP-1, ma
@@ -109,37 +145,40 @@ criterio coincide con quello di Hoffmann, pensato per il SALBP-1. La versione de
 progetto aggiunge la ricerca sul tempo ciclo e un limite di 20.000 nodi per
 stazione, mai raggiunto nella campagna (vedi la docstring di `hoffmann.py`).
 
-## Istanze
-
 Generate da `src/generator.py`, che controlla direttamente l'**order strength**
 (OS): la frazione di coppie di task il cui ordine è fissato dalle precedenze,
-dirette o indirette. Il generatore aggiunge archi *u* → *v* con *u* < *v*,
-saltando quelli già implicati, finché l'OS raggiunge l'obiettivo (tolleranza
-0,02). È lo stesso passo finale del generatore SALBPGen (Otto et al., 2013), che
-però costruisce prima il grafo a stadi e può inserire catene e colli di
-bottiglia; il generatore del progetto parte invece da un grafo vuoto.
-Ogni istanza è riproducibile: il seed dipende solo dal seed di base, dal gruppo
-e dall'indice.
+dirette o indirette.
+
+```math
+\mathrm{OS} = \frac{\text{coppie } (i, j) \text{ con } i \text{ predecessore, diretto o indiretto, di } j}{n(n-1)/2}
+```
+
+Il generatore aggiunge archi $`u \to v`$ con $`u < v`$, saltando quelli già
+implicati, finché l'OS raggiunge l'obiettivo con tolleranza 0,02. È lo stesso
+passo finale del generatore SALBPGen (Otto et al., 2013), che però costruisce
+prima il grafo a stadi e può inserire catene e colli di bottiglia; il
+generatore del progetto parte invece da un grafo vuoto. Ogni istanza è
+riproducibile: il seed dipende solo dal seed di base, dal gruppo e dall'indice.
 
 Disegno sperimentale (`configs/design.json`): fattoriale completo su quattro
 fattori, **25 istanze per combinazione, 72 combinazioni, 1800 istanze**.
 
 | Fattore | Livelli |
 | --- | --- |
-| Numero di task *n* | 20, 50, 100, 200 |
+| Numero di task $`n`$ | 20, 50, 100, 200 |
 | Order strength | 0,2 (grafo sparso), 0,6 (denso), 0,9 (quasi una catena) |
-| Numero di stazioni *m* | *n*/3 (tante), *n*/6 (medie), *n*/10 (poche) |
+| Numero di stazioni $`m`$ | $`n/3`$ (tante), $`n/6`$ (medie), $`n/10`$ (poche), arrotondato |
 | Tempi dei task | uniformi tra 1 e 100, oppure bimodali (80% tra 1 e 33, 20% tra 68 e 100) |
 
 Da dove vengono le scelte:
 
-- *n* = 20, 50, 100, i livelli di OS e le 25 istanze per combinazione seguono
+- *$`n`$* = 20, 50, 100, i livelli di OS e le 25 istanze per combinazione seguono
   Otto, Otto & Scholl (2013).
-- *n* = 200 è una scelta del progetto (Otto et al. arrivano a 1000 task).
+- *$`n`$* = 200 è una scelta del progetto (Otto et al. arrivano a 1000 task).
   Álvarez-Miranda et al. (2023) osservano che i metodi esatti iniziano a
   fallire intorno ai 100 task: con 200 il disegno ha un livello in cui i PLI
   non chiudono più.
-- Il numero di stazioni in proporzione a *n* è una scelta del progetto. Otto et al.
+- Il numero di stazioni in proporzione a *$`n`$* è una scelta del progetto. Otto et al.
   controllano la difficoltà attraverso i tempi dei task rispetto al tempo ciclo;
   nel SALBP-2 il tempo ciclo non è un dato, e il numero di stazioni ne fa le veci.
   Álvarez-Miranda et al. (2023) usano lo stesso parametro (numero atteso di task
@@ -222,8 +261,9 @@ eseguono solo alcuni metodi, per esempio `--methods hoffmann gruppi`.
 | Esecuzione | in sequenza, un metodo alla volta |
 | Macchina | AMD Ryzen 5 5500U (6 core), 8 GB di RAM |
 
-`MIPGapAbs` sotto 1 è lecito perché l'ottimo è intero: quando la distanza tra
-soluzione e bound scende sotto 1, l'ottimo è dimostrato.
+`MIPGapAbs` sotto 1 è lecito perché l'ottimo è intero: quando la distanza
+assoluta tra soluzione e bound scende sotto 1, il bound arrotondato per eccesso
+coincide con la soluzione e l'ottimo è dimostrato.
 
 Il limite di tempo vale per la sola risoluzione; il tempo riportato per i PLI
 comprende anche la costruzione del modello (colonna `build_s`), quello delle
@@ -260,7 +300,7 @@ I tempi bimodali sono stati aggiunti dopo, già con il bound completo: prima a
 | `status` | `optimal` (ottimo dimostrato), `feasible` (limite di tempo, con soluzione), `no_solution`, `infeasible`, `solver_error`, `error` |
 | `objective` | carico massimo della soluzione trovata; per un PLI fermato dal limite di tempo è l'incumbent |
 | `lower_bound` | miglior lower bound del metodo (combinatorio o del solver) |
-| `gap` | (objective − lower_bound) / lower_bound |
+| `gap` | $`(\text{objective} - \text{lower\_bound}) / \text{lower\_bound}`$ |
 | `time_s`, `build_s` | tempo totale e tempo di costruzione del modello |
 
 Per un modello PLI si riporta l'ottimo e il tempo, oppure, allo scadere del
@@ -285,9 +325,15 @@ in **862 bimodali su 900**.
 - **Ottimo raggiunto:** tra le istanze con ottimo noto, quota in cui il metodo
   trova una soluzione ottima, anche senza poterlo dimostrare. È la misura giusta
   per le euristiche.
-- **Scarto dal miglior LB:** (obiettivo − miglior lower bound dell'istanza) /
-  miglior lower bound, su tutte le istanze. Dove l'ottimo non è noto è un
-  limite superiore alla distanza dall'ottimo.
+- **Scarto dal miglior LB:** su tutte le istanze, con $`z`$ il valore trovato
+  dal metodo e $`\mathrm{LB}^*`$ il miglior lower bound dell'istanza tra tutti i
+  metodi:
+
+```math
+  \text{scarto} = \frac{z - \mathrm{LB}^*}{\mathrm{LB}^*}
+```
+
+  Dove l'ottimo non è noto è un limite superiore alla distanza dall'ottimo.
 
 Istanze chiuse per numero di task:
 
