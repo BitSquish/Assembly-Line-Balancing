@@ -12,7 +12,7 @@ Una linea di montaggio ha **m stazioni in sequenza**. Ogni task *i* ha un tempo
 stazione è la somma dei tempi dei suoi task.
 
 **Obiettivo:** dato *m*, minimizzare il carico massimo di stazione *c* (il tempo
-ciclo della linea). Esempio: con carichi 10, 12 e 9 il valore della soluzione è 12.
+ciclo della linea). 
 
 ## Metodi
 
