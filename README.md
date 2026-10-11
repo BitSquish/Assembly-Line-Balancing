@@ -18,31 +18,55 @@ ciclo della linea).
 
 ### Bound (`src/bounds.py`)
 
-**Lower bound**, usato da tutti i metodi. Segue i bound LC1-LC3 di Scholl &
-Becker (2006, sez. 4.1), calcolati in tre passi:
+**Lower bound**, usato da tutti i metodi. Segue i bound LC1, LC2 e LC3 di
+Scholl & Becker (2006, sez. 4.1), calcolati in tre passi. Nelle formule i tempi
+sono ordinati in modo decrescente ($`t_1 \ge t_2 \ge \dots \ge t_n`$), $`P_i`$ e
+$`F_i`$ sono gli insiemi di tutti i predecessori e di tutti i successori del
+task $`i`$, diretti e indiretti.
 
-1. **LC1 e LC2.** Carico medio: c ≥ max{t_max, ⌈Σ tᵢ / m⌉} (McNaughton, 1959).
-   Principio dei cassetti (Klein & Scholl, 1996): tra i *k·m* + 1 task più
-   lunghi, almeno *k* + 1 stanno nella stessa stazione.
-2. **LC3 con finestre semplici.** Per un tempo ciclo *c*, il task *i* non può
-   stare prima della stazione E_i(c) = ⌈(tᵢ + tempi di tutti i predecessori) / c⌉
-   né dopo L_i(c) = m + 1 − ⌈(tᵢ + tempi di tutti i successori) / c⌉
-   (Patterson & Albracht, 1975; Ritt & Costa, 2018, sez. 2.2). Si alza *c*
-   finché tutte le finestre sono non vuote.
-3. **LC3 con teste e code ricorsive.** Le stesse finestre, con un limite più
-   stretto sul tempo che deve precedere e seguire ogni task, calcolato come il
-   bound a una macchina LM4 di Johnson (1988), senza i bound di conteggio sui
-   sottoproblemi. Si alza *c* finché nessun task viola il test.
+**1. LC1 e LC2.** Il carico medio (McNaughton, 1959) e il task più lungo danno
 
-Ogni valore di *c* scartato è irraggiungibile da qualsiasi soluzione, quindi il
+```math
+c \;\ge\; \mathrm{LC1} = \max\left\{\, t_1,\; \left\lceil \frac{\sum_i t_i}{m} \right\rceil \right\}
+```
+
+Principio dei cassetti (Klein & Scholl, 1996): tra i $`k\,m+1`$ task più lunghi,
+almeno $`k+1`$ stanno nella stessa stazione, quindi
+
+```math
+c \;\ge\; \mathrm{LC2} = \max_{k \ge 1} \; \sum_{h=0}^{k} t_{k m + 1 - h}
+```
+
+**2. LC3 con finestre semplici** (Patterson & Albracht, 1975; Ritt & Costa,
+2018, sez. 2.2). Per un tempo ciclo $`c`$, il task $`i`$ non può stare prima
+della stazione $`E_i(c)`$ né dopo la stazione $`L_i(c)`$:
+
+```math
+E_i(c) = \left\lceil \frac{t_i + \sum_{h \in P_i} t_h}{c} \right\rceil
+\qquad
+L_i(c) = m + 1 - \left\lceil \frac{t_i + \sum_{h \in F_i} t_h}{c} \right\rceil
+```
+
+Si alza $`c`$ finché $`E_i(c) \le L_i(c)`$ per ogni task.
+
+**3. LC3 con teste e code ricorsive.** Le somme $`\sum_{h \in P_i} t_h`$ e
+$`\sum_{h \in F_i} t_h`$ sono sostituite da una testa $`a_i`$ e una coda $`n_i`$
+più grandi: il tempo che deve necessariamente passare prima di $`i`$ e dopo
+$`i`$, calcolato come il bound a una macchina LM4 di Johnson (1988), senza i
+bound di conteggio sui sottoproblemi. Un valore di $`c`$ è escluso se per
+qualche task
+
+```math
+\left\lceil \frac{a_i + t_i}{c} \right\rceil \;>\; m + 1 - \left\lceil \frac{t_i + n_i}{c} \right\rceil
+\qquad \text{oppure} \qquad
+a_i + t_i + n_i \;>\; m\,c
+```
+
+e si alza $`c`$ finché nessun task viola il test.
+
+Ogni valore di $`c`$ scartato è irraggiungibile da qualsiasi soluzione, quindi il
 risultato è un lower bound valido. La validità è verificata nei test contro
 l'ottimo calcolato per enumerazione completa.
-
-**Upper bound iniziale:** soluzione greedy in ordine topologico. Serve solo a
-fissare l'intervallo di *c* e le finestre di stazione dei modelli.
-
-Il lower bound riportato per un modello PLI è il massimo tra il bound
-combinatorio e quello restituito dal solver.
 
 ### Modelli PLI (`src/models/`)
 
