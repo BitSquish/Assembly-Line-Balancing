@@ -146,7 +146,7 @@ progetto aggiunge la ricerca sul tempo ciclo e un limite di 20.000 nodi per
 stazione, mai raggiunto nella campagna (vedi la docstring di `hoffmann.py`).
 
 
-### Istanze
+## Istanze
 
 Generate da `src/generator.py`, che controlla direttamente l'**order strength**
 (OS): la frazione di coppie di task il cui ordine è fissato dalle precedenze,
@@ -332,9 +332,9 @@ in **862 bimodali su 900**.
   dal metodo e $`\mathrm{LB}^*`$ il miglior lower bound dell'istanza tra tutti i
   metodi:
 
-```math
-  \text{scarto} = \frac{z - \mathrm{LB}^*}{\mathrm{LB}^*}
-```
+    ```math
+      \text{scarto} = \frac{z - \mathrm{LB}^*}{\mathrm{LB}^*}
+    ```
 
   Dove l'ottimo non è noto è un limite superiore alla distanza dall'ottimo.
 
@@ -388,12 +388,13 @@ Osservazioni:
   lasciano aperte pochissime istanze (Álvarez-Miranda et al., 2023). Lo scopo è
   confrontare le formulazioni tra loro e con l'euristica.
 
-Tabelle e grafici completi sono in `results/figures_results/`. Quelli principali
-riguardano le istanze uniformi e sono griglie di pannelli che seguono il
-disegno: una colonna per numero di task, una riga per order strength e, dentro
-ogni pannello, un gruppo di barre per numero di stazioni. Il confronto tra le
-distribuzioni è in `tabella_distribuzioni_<n>.csv` e nei grafici
-`distribuzioni_<n>_*.png`, una coppia di colonne per ogni numero di task.
+Tabelle e grafici completi sono in `results/figures_results/`. Ogni grafico
+esiste in due versioni, `_uniform` e `_bimodal`, con lo stesso asse verticale; è
+una griglia di pannelli che segue il disegno: una colonna per numero di task,
+una riga per order strength e, dentro ogni pannello, un gruppo di barre per
+numero di stazioni. Il confronto diretto tra le distribuzioni è in
+`confronto_distribuzioni.png`; quello tra Hoffmann e il miglior PLI in
+`confronto_hoffmann_pli.csv`.
 
 ## Note sulle scelte
 

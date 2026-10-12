@@ -1,10 +1,9 @@
 """Modello PLI per il SALBP-2 con le precedenze di Patterson & Albracht (1975).
 
 Riferimenti:
-    Patterson, J. H., & Albracht, J. J. (1975). Assembly-line balancing:
-        zero-one programming with Fibonacci search. Operations Research,
-        23(1), 166-172.
-    Formulazione PA come riportata in Ritt & Costa (2018), eq. (21).
+        Patterson, J. H., & Albracht, J. J. (1975). Technical Note — Assembly-line
+        balancing: Zero-one programming with Fibonacci search. Operations
+        Research, 23(1), 166-172.
 
 Il contributo di Patterson & Albracht (1975) usato qui è il vincolo di
 precedenza (3) e le finestre di stazione E_i, L_i: entrambi non dipendono dal

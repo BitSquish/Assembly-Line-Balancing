@@ -36,8 +36,8 @@ Origine e letteratura:
     precedenze e per gruppi di operazioni). Una verifica sulla letteratura ha
     mostrato che il criterio coincide con l'euristica di Hoffmann:
 
-        Hoffmann, T. R. (1963). Assembly line balancing with a precedence
-            matrix. Management Science.
+            Hoffmann, T. R. (1963). Assembly line balancing with a precedence
+            matrix. Management Science, 9(4), 551-562.
 
     descritta in Scholl, A., & Becker, C. (2006). State-of-the-art exact and
     heuristic solution procedures for simple assembly line balancing. European
