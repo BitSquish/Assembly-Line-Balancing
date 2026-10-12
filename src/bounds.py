@@ -4,7 +4,7 @@ Lower bound, upper bound e finestre di stazione per il SALBP-2.
 Convenzione: le stazioni sono numerate 1..m, come nei paper. Così E_i e L_i
 calcolati qui coincidono con le formule di Ritt & Costa senza traslazioni.
 
-Finestre di stazione per un tempo ciclo c (Patterson & Albracht, 1975; Ritt & Costa, 2018, sez. 2.2)
+Finestre di stazione per un tempo ciclo c (Patterson & Albracht, 1975; Ritt & Costa, 2018, sez. 2.2):
 
     E_i(c) = ceil( (t_i + somma dei tempi di P*_i) / c )
     L_i(c) = m + 1 - ceil( (t_i + somma dei tempi di F*_i) / c )
@@ -14,6 +14,7 @@ ne contiene al massimo c; L_i: simmetrico sui successori. Se in una soluzione
 ogni stazione ha carico <= c, ogni task i sta in [E_i(c), L_i(c)].
 E_i è non crescente in c e L_i non decrescente: a c più grande, finestre
 più larghe.
+
 Lower bound usato da tutti i metodi (lower_bound), in tre passi:
     1. simple_lower_bound: LC1 e LC2;
     2. window_lower_bound: LC3 con teste e code semplici;
@@ -90,14 +91,15 @@ class StationBounds:
 
 
 def simple_lower_bound(instance: ALBInstance) -> int:
-    """Massimo tra i bound combinatori classici sul carico massimo.
+    """
+    Bound combinatori LC1 (carico medio) e LC2 (principio dei cassetti).
 
     - ceil(somma dei tempi / m): il carico medio;
     - per k = 0, 1, 2, ...: tra i k*m + 1 task più lunghi, per il principio
       dei cassetti almeno k + 1 finiscono nella stessa stazione, quindi
       c >= somma dei k + 1 più corti tra questi.
       k = 0 dà t_max, k = 1 dà t_(m) + t_(m+1) (tempi in ordine decrescente).
-      Bound combinatori LC1 (carico medio) e LC2 (principio dei cassetti).
+      
 
     """
     m = instance.m_stations

@@ -24,8 +24,8 @@ L'OS ottenuta viene salvata nei metadati accanto a quella obiettivo.
 Tempi (interi, tra t_min e t_max):
     - "uniform": uniformi su [t_min, t_max];
     - "bimodal": con probabilità 0,8 un tempo "corto" nel primo terzo
-      dell'intervallo, altrimenti un tempo "lungo" nell'ultimo terzo. Molte
-      operazioni corte e poche lunghe rendono più difficile bilanciare.
+      dell'intervallo, altrimenti un tempo "lungo" nell'ultimo terzo. È la
+      distribuzione di default di SALBPGen (Otto et al., 2013).
 
 Il passo che porta l'OS al valore obiettivo, aggiungendo archi casuali uno
 alla volta, è lo stesso di SALBPGen: Otto, A., Otto, C., & Scholl, A. (2013).

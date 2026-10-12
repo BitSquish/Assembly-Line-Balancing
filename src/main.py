@@ -4,8 +4,8 @@ Uso (dalla cartella del progetto):
     python -m src.main
 
     1) Tutti gli esperimenti: la campagna completa definita in configs/design.json.
-    2) Demo rapida: tre istanze da 50 task, tutti i metodi, 15 secondi per ogni PLI
-       (al massimo un minuto e mezzo con due modelli PLI).
+    2) Demo rapida: tre istanze da 50 task e una da 200, tutti i metodi,
+        15 secondi per ogni PLI (al massimo circa due minuti).
     3) Personalizzato: metodi, limite di tempo e parametri delle istanze a scelta.
     4) Vedi risultati: tabella riassuntiva di un file di risultati già prodotto.
     5) Genera grafici e tabelle da un file di risultati.
@@ -21,7 +21,6 @@ from __future__ import annotations
 import csv
 import itertools
 import json
-import os
 import subprocess
 import sys
 import time
@@ -142,8 +141,7 @@ def timeout_share(g: dict) -> float:
 
 def duration(groups: list[dict], per_group: int, methods: list[str], time_limit: float) -> tuple[float, float]:
     """
-    Stima la durata totale di un insieme di esperimenti, considerando sia la durata stimata che quella massima.
-    (durata stimata, durata massima) in secondi.  
+    (durata stimata, durata massima) in secondi. 
 
     """
     n_pli = sum(m in PLI for m in methods)
@@ -427,8 +425,8 @@ def demo() -> None:
     groups = [g for _, g in DEMO_GROUPS]
     estimate, worst = duration(groups, 1, methods, DEMO_TIME_LIMIT)
 
-    print(f"\n{Style.BOLD}Demo rapida{Style.RESET} (3 istanze da 50 task, "
-          f"{len(PLI)} PLI e {len(HEURISTICS)} euristiche)")
+    print(f"\n{Style.BOLD}Demo rapida{Style.RESET} ({len(DEMO_GROUPS)} istanze, "
+            f"{len(PLI)} PLI e {len(HEURISTICS)} euristiche)")
     print(f"{Style.DIM}Limite di tempo: {DEMO_TIME_LIMIT:g} secondi per ogni PLI | "
           f"Durata stimata: {fmt_time(estimate)} (massima {fmt_time(worst)}){Style.RESET}\n")
     print_groups(groups, notes=[text for text, _ in DEMO_GROUPS])
@@ -584,8 +582,8 @@ def main() -> None:
         choice = choose(
             "Menù principale",
             ["Esegui tutti gli esperimenti (campagna completa, molte ore)",
-             f"Demo rapida (3 istanze, {len(PLI)} PLI e {len(HEURISTICS)} euristiche, "
-             f"al massimo {fmt_time(3 * len(PLI) * DEMO_TIME_LIMIT + 3)})",
+              f"Demo rapida ({len(DEMO_GROUPS)} istanze, {len(PLI)} PLI e {len(HEURISTICS)} euristiche, "
+              f"al massimo {fmt_time(len(DEMO_GROUPS) * (len(PLI) * DEMO_TIME_LIMIT + 1))})",
              "Personalizzato (metodi, limite di tempo e parametri a scelta)",
              "Vedi risultati (tabella di un file già prodotto)",
              "Genera grafici e tabelle da un file di risultati",

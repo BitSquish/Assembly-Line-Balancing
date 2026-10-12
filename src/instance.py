@@ -59,10 +59,10 @@ class ALBInstance:
         task_times:   tempo di ogni operazione, indicizzato 0-based.
         precedences:  archi diretti (i, j), "i su una stazione di indice <= quella di j".
         m_stations:   numero di stazioni. Dato di input nel SALBP-2.
-                cycle_time:   NON è l'obiettivo del SALBP-2. È il tempo ciclo letto dai
-                      file benchmark SALBP-1, dove è un dato. Nel nostro problema
-                      il tempo ciclo è il carico massimo di stazione, e si trova
-                      in Solution. None se il file non lo riporta.
+        cycle_time:   NON è l'obiettivo del SALBP-2. È il tempo ciclo letto dai
+                        file benchmark SALBP-1, dove è un dato. Nel nostro problema
+                        il tempo ciclo è il carico massimo di stazione, e si trova
+                        in Solution. None se il file non lo riporta.
         meta:         parametri del generatore (seed, order strength, distribuzione).
     """
 
@@ -95,7 +95,7 @@ class ALBInstance:
 
     @property
     def total_time(self) -> int:
-        """Somma dei tempi. Base di LB1 e dell'efficienza di linea."""
+        """Somma dei tempi. Base di LC1 e dell'efficienza di linea."""
         return sum(self.task_times)
 
     # ------------------------------------------------------------- costruzione

@@ -1,4 +1,9 @@
-"""Riesecuzione dopo il cambio di lower bound, e verifica.
+"""
+Script storico: è servito una volta, sulla campagna con i soli tempi uniformi
+(900 istanze), quando il lower bound è passato da window_lower_bound a
+lower_bound. I risultati di allora sono in results/storico/. Le istanze
+bimodali sono state eseguite dopo, già con il bound completo, quindi lo script
+non va rieseguito sul results.csv attuale.
 
 Uso:
     python -m scripts.rerun_bound prepare [--extra ISTANZA:METODO ...]
@@ -58,6 +63,7 @@ def num(value: str) -> float | None:
 def prepare(extra: list[str]) -> None:
     if BACKUP.exists():
         raise SystemExit(f"{BACKUP} esiste già: prepare è già stato eseguito.")
+    BACKUP.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(RESULTS, BACKUP)
     print(f"Copia dei risultati originali: {BACKUP}")
 

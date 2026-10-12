@@ -418,7 +418,7 @@ scripts/
   gen_instances.py    generazione delle istanze e del manifest
   run_experiments.py  esecuzione dei metodi sulle istanze
   make_figures.py     tabelle e grafici dai risultati
-  rerun_bound.py      riesecuzione e verifica dopo il cambio di lower bound
+  rerun_bound.py      storico: riesecuzione e verifica dopo il cambio di lower bound
 src/
   main.py             menù del progetto
   instance.py         istanza e lettura/scrittura del formato .alb
