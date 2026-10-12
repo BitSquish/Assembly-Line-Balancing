@@ -91,8 +91,7 @@ class StationBounds:
 
 
 def simple_lower_bound(instance: ALBInstance) -> int:
-    """
-    Bound combinatori LC1 (carico medio) e LC2 (principio dei cassetti).
+    """Bound combinatori LC1 (carico medio) e LC2 (principio dei cassetti).
 
     - ceil(somma dei tempi / m): il carico medio;
     - per k = 0, 1, 2, ...: tra i k*m + 1 task più lunghi, per il principio

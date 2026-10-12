@@ -145,6 +145,9 @@ criterio coincide con quello di Hoffmann, pensato per il SALBP-1. La versione de
 progetto aggiunge la ricerca sul tempo ciclo e un limite di 20.000 nodi per
 stazione, mai raggiunto nella campagna (vedi la docstring di `hoffmann.py`).
 
+
+### Istanze
+
 Generate da `src/generator.py`, che controlla direttamente l'**order strength**
 (OS): la frazione di coppie di task il cui ordine è fissato dalle precedenze,
 dirette o indirette.
@@ -172,13 +175,13 @@ fattori, **25 istanze per combinazione, 72 combinazioni, 1800 istanze**.
 
 Da dove vengono le scelte:
 
-- *`n`* = 20, 50, 100, i livelli di OS e le 25 istanze per combinazione seguono
+- $`n`$ = 20, 50, 100, i livelli di OS e le 25 istanze per combinazione seguono
   Otto, Otto & Scholl (2013).
-- *`n`* = 200 è una scelta del progetto (Otto et al. arrivano a 1000 task).
+- $`n`$ = 200 è una scelta del progetto (Otto et al. arrivano a 1000 task).
   Álvarez-Miranda et al. (2023) osservano che i metodi esatti iniziano a
   fallire intorno ai 100 task: con 200 il disegno ha un livello in cui i PLI
   non chiudono più.
-- Il numero di stazioni in proporzione a *`n`* è una scelta del progetto. Otto et al.
+- Il numero di stazioni in proporzione a $`n`$ è una scelta del progetto. Otto et al.
   controllano la difficoltà attraverso i tempi dei task rispetto al tempo ciclo;
   nel SALBP-2 il tempo ciclo non è un dato, e il numero di stazioni ne fa le veci.
   Álvarez-Miranda et al. (2023) usano lo stesso parametro (numero atteso di task
@@ -276,7 +279,7 @@ passi 1 e 2. L'analisi dei risultati ha mostrato che a OS 0,9 quel bound era
 debole: coincideva con l'ottimo solo nel 14% delle istanze chiuse, contro il 92%
 a OS 0,2. È stato quindi aggiunto il passo 3.
 
-Il bound entra nei metodi solo come valore (estremo inferiore di *c* nei PLI,
+Il bound entra nei metodi solo come valore (estremo inferiore di $c$ nei PLI,
 punto di partenza della ricerca nelle euristiche), quindi sono state rieseguite
 solo le esecuzioni interessate (`scripts/rerun_bound.py`):
 

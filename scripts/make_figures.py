@@ -63,7 +63,7 @@ METHODS = {
     "patterson_albracht": ("Patterson & Albracht", "#5293e3"),
     "ritt_costa": ("Ritt & Costa", "#25ba85"),
     "hoffmann": ("Hoffmann", "#fab3ff"),
-    "gruppi": ("Gruppi", "#922ba6"),
+    "gruppi": ("Gruppi", "#990c2b"),
 }
 PLI = ["patterson_albracht", "ritt_costa"]
 HEURISTICS = ["hoffmann", "gruppi"]
@@ -71,8 +71,7 @@ HEURISTICS = ["hoffmann", "gruppi"]
 # Il fattore "numero di stazioni" è memorizzato come task per stazione: m = n / valore.
 STATION_LABELS = {3: "tante\n(n/3)", 6: "medie\n(n/6)", 10: "poche\n(n/10)"}
 DIST_LABELS = {"uniform": "uniformi", "bimodal": "bimodali"}
-DIST_COLORS = {"uniform": "#fea8f7", "bimodal": "#7c1c78"}
-
+DIST_COLORS = {"uniform": "#71f116", "bimodal": "#7c1c78"}
 INK, INK_MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e3e2dc", "#fcfcfb"
 
 

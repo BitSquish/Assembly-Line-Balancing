@@ -1,5 +1,4 @@
-"""
-Script storico: è servito una volta, sulla campagna con i soli tempi uniformi
+"""Script storico: è servito una volta, sulla campagna con i soli tempi uniformi
 (900 istanze), quando il lower bound è passato da window_lower_bound a
 lower_bound. I risultati di allora sono in results/storico/. Le istanze
 bimodali sono state eseguite dopo, già con il bound completo, quindi lo script
