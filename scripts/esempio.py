@@ -23,7 +23,7 @@ import networkx as nx
 
 from scripts.make_figures import GRID, INK, INK_MUTED, SURFACE
 from scripts.run_experiments import METHODS
-from src.bounds import lower_bound, simple_lower_bound, window_lower_bound
+from src.bounds import lower_bound, simple_lower_bound, window_lower_bound, StationBounds
 from src.graph import PrecedenceGraph
 from src.instance import ALBInstance
 
@@ -50,16 +50,16 @@ def draw_graph(inst: ALBInstance, stations: tuple[int, ...], path: Path) -> None
     dg.add_nodes_from(range(inst.n_tasks))
     fig, ax = plt.subplots(figsize=(8, 4.2))
     nx.draw_networkx_edges(dg, pos, ax=ax, edge_color=INK_MUTED, arrowsize=14,
-                           node_size=1100, width=1.2)
-    nx.draw_networkx_nodes(dg, pos, ax=ax, node_size=1100, linewidths=0,
+                           node_size=1500, width=1.2)
+    nx.draw_networkx_nodes(dg, pos, ax=ax, node_size=1500, linewidths=0,
                            node_color=[STATION_COLORS[stations[j] - 1] for j in dg.nodes])
-    nx.draw_networkx_labels(dg, pos, ax=ax, font_color="white", font_size=9,
-                            labels={j: f"{j + 1}\n({inst.task_times[j]})" for j in dg.nodes})
+    nx.draw_networkx_labels(dg, pos, ax=ax, font_color="white", font_size=8.5,
+                            labels={j: f"{j + 1}\n(t = {inst.task_times[j]})" for j in dg.nodes})
     for s in range(1, inst.m_stations + 1):
         ax.scatter([], [], s=120, color=STATION_COLORS[s - 1], label=f"stazione {s}")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.02), ncol=inst.m_stations,
               frameon=False, fontsize=9)
-    ax.set_title("Task (tempo), colorati per stazione", fontsize=11, color=INK, loc="left")
+    ax.set_title("Task e tempo t, colorati per stazione", fontsize=11, color=INK, loc="left")
     ax.axis("off")
     fig.patch.set_facecolor(SURFACE)
     fig.tight_layout()
@@ -100,6 +100,8 @@ def draw_loads(inst: ALBInstance, stations: tuple[int, ...], lb: int, path: Path
     print(f"  {path}")
 
 
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=Path("results/esempio"))
@@ -124,6 +126,7 @@ def main() -> None:
     best = results["hoffmann"]
     draw_graph(inst, best.solution.stations, args.out / "esempio_grafo.png")
     draw_loads(inst, best.solution.stations, best.lower_bound, args.out / "esempio_carichi.png")
+
 
 
 if __name__ == "__main__":
