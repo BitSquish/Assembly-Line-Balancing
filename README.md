@@ -312,9 +312,9 @@ limite, l'incumbent e il lower bound.
 ### Risultati principali
 
 7200 esecuzioni, circa 48 ore di calcolo per i PLI (35 sulle istanze uniformi,
-13 sulle bimodali). Nessuna esecuzione è terminata senza soluzione. L'ottimo è
-noto, cioè dimostrato da almeno un metodo, in **719 istanze uniformi su 900** e
-in **862 bimodali su 900**.
+13 sulle bimodali). Nessuna esecuzione è terminata senza soluzione. L’ottimo è noto, 
+cioè la miglior soluzione trovata coincide con il miglior lower bound tra tutti i metodi, 
+in 719 istanze uniformi su 900 e in 862 bimodali su 900.
 
 | Metodo | Ottimi dimostrati (unif. / bim.) | Ottimo raggiunto (unif. / bim.) | Scarto dal miglior LB (unif. / bim.) | Tempo medio (unif. / bim.) |
 | --- | --- | --- | --- | --- |
