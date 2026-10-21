@@ -370,9 +370,23 @@ Osservazioni:
   del task più lungo e i task brevi riempiono le stazioni, quindi il lower bound
   è spesso già l'ottimo. A parità di stazioni, però, le due distribuzioni danno
   un carico relativo diverso: il confronto non è a parità di difficoltà.
-- **Difficoltà.** Con tempi uniformi il fattore decisivo è il numero di stazioni:
-  le istanze chiuse sono il 49% con tante stazioni, il 92% con stazioni medie e
-  il 99% con poche (con tempi bimodali 92%, 96% e 100%).
+- **Difficoltà.** Il fattore decisivo è il numero di stazioni. Percentuale di
+  istanze chiuse:
+
+  | Stazioni | Uniformi: solo PLI | Uniformi: tutti i metodi | Bimodali: solo PLI | Bimodali: tutti i metodi |
+  | --- | --- | --- | --- | --- |
+  | tante ($`n/3`$) | 45% | 49% | 91% | 92% |
+  | medie ($`n/6`$) | 69% | 92% | 89% | 96% |
+  | poche ($`n/10`$) | 95% | 99% | 100% | 100% |
+
+  "Tutti i metodi" conta anche le istanze in cui la soluzione di Hoffmann
+  coincide con il miglior lower bound. La differenza tra le due colonne mostra
+  due modi diversi di restare aperti:
+  - con stazioni medie o poche il lower bound è già quello giusto: al PLI
+    manca la soluzione entro 180 secondi, e Hoffmann la trova;
+  - con tante stazioni (circa 3 task ciascuna) l'impacchettamento è rigido:
+    né i PLI né Hoffmann raggiungono il lower bound, che probabilmente è
+    debole.
 - **Patterson & Albracht contro Ritt & Costa.** Ritt & Costa dimostra l'ottimo in
   più istanze (chiuse solo da lui: 53 contro 28 uniformi, 26 contro 14
   bimodali), con il vantaggio maggiore a OS 0,9. Con tempi uniformi Patterson &
@@ -423,6 +437,7 @@ scripts/
   run_experiments.py  esecuzione dei metodi sulle istanze
   make_figures.py     tabelle e grafici dai risultati
   rerun_bound.py      storico: riesecuzione e verifica dopo il cambio di lower bound
+  esempio.py          istanza di esempio per le slide: bound, soluzioni e figure
 src/
   main.py             menù del progetto
   instance.py         istanza e lettura/scrittura del formato .alb
