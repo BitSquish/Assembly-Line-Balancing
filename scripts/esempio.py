@@ -7,7 +7,7 @@ Esegue i quattro metodi sull'istanza (la stessa di tests/test_heuristic.py),
 stampa bound e soluzioni e salva due figure:
     esempio_grafo.png     grafo delle precedenze, task colorati per stazione
                           (soluzione di Hoffmann)
-    order_strength.png    grafi e matrice di raggiungibilità per OS 0,2, 0,6 e 0,9
+    order_strength.png    grafi e matrice delle precedenze per OS 0,2, 0,6 e 0,9
                           (generatore, 10 task, seed 1)
 """
 
@@ -93,7 +93,7 @@ def _layered_positions(graph: nx.DiGraph) -> dict[int, tuple[float, float]]:
 def draw_order_strength(path: Path, n: int = 10) -> None:
     """Sopra: grafo delle precedenze (solo archi diretti) per OS 0,2, 0,6 e 0,9.
 
-    Sotto: matrice di raggiungibilità (chiusura transitiva), un quadrato per
+    Sotto: matrice delle precedenze (chiusura transitiva), un quadrato per
     coppia di task, blu se l'ordine è fissato. OS = quadrati blu / (n(n-1)/2).
     """
     total = n * (n - 1) // 2
