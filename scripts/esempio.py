@@ -7,7 +7,6 @@ Esegue i quattro metodi sull'istanza (la stessa di tests/test_heuristic.py),
 stampa bound e soluzioni e salva due figure:
     esempio_grafo.png     grafo delle precedenze, task colorati per stazione
                           (soluzione di Hoffmann)
-    esempio_carichi.png   carico di ogni stazione, con il lower bound
 """
 
 from __future__ import annotations
@@ -21,9 +20,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from scripts.make_figures import GRID, INK, INK_MUTED, SURFACE
+from scripts.make_figures import INK, INK_MUTED, SURFACE
 from scripts.run_experiments import METHODS
-from src.bounds import lower_bound, simple_lower_bound, window_lower_bound, StationBounds
+from src.bounds import lower_bound, simple_lower_bound, window_lower_bound
 from src.graph import PrecedenceGraph
 from src.instance import ALBInstance
 
@@ -66,39 +65,6 @@ def draw_graph(inst: ALBInstance, stations: tuple[int, ...], path: Path) -> None
     fig.savefig(path, dpi=200, facecolor=SURFACE)
     plt.close(fig)
     print(f"  {path}")
-
-
-def draw_loads(inst: ALBInstance, stations: tuple[int, ...], lb: int, path: Path) -> None:
-    """Barre impilate: ogni stazione con i suoi task, linea al lower bound."""
-    fig, ax = plt.subplots(figsize=(6, 3.2))
-    for s in range(1, inst.m_stations + 1):
-        left = 0
-        for j in [j for j in range(inst.n_tasks) if stations[j] == s]:
-            t = inst.task_times[j]
-            ax.barh(s, t, left=left, color=STATION_COLORS[s - 1], edgecolor=SURFACE, linewidth=2)
-            ax.text(left + t / 2, s, str(j + 1), ha="center", va="center", color="white", fontsize=9)
-            left += t
-        ax.text(left + 0.3, s, str(left), va="center", fontsize=9, color=INK)
-    ax.axvline(lb, color=INK_MUTED, linestyle=(0, (4, 3)), linewidth=1)
-    ax.text(lb, 0.35, f"lower bound {lb}", ha="center", fontsize=8, color=INK_MUTED)
-    top = max(lb, max(sum(inst.task_times[j] for j in range(inst.n_tasks) if stations[j] == s)
-                      for s in range(1, inst.m_stations + 1)))
-    ax.set_xticks(range(0, top + 1, 2))
-    ax.set_yticks(range(1, inst.m_stations + 1))
-    ax.set_yticklabels([f"stazione {s}" for s in range(1, inst.m_stations + 1)], fontsize=9)
-    ax.invert_yaxis()
-    ax.set_xlabel("carico", fontsize=9, color=INK_MUTED)
-    for side in ("top", "right", "left"):
-        ax.spines[side].set_visible(False)
-    ax.spines["bottom"].set_color(GRID)
-    ax.tick_params(length=0, labelcolor=INK_MUTED)
-    ax.set_facecolor(SURFACE)
-    fig.patch.set_facecolor(SURFACE)
-    fig.tight_layout()
-    fig.savefig(path, dpi=200, facecolor=SURFACE)
-    plt.close(fig)
-    print(f"  {path}")
-
 
 
 

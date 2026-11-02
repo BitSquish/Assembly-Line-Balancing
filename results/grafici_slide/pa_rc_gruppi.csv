@@ -1,0 +1,11 @@
+group;PA (%);RC (%);differenza
+n100_os0.9_r3_uniform;12,0;84,0;72,0
+n200_os0.2_r10_uniform;88,0;44,0;44,0
+n200_os0.9_r10_uniform;40,0;80,0;40,0
+n200_os0.9_r6_bimodal;0,0;28,0;28,0
+n200_os0.9_r3_bimodal;60,0;80,0;20,0
+n200_os0.9_r10_bimodal;80,0;100,0;20,0
+n200_os0.2_r6_bimodal;72,0;56,0;16,0
+n200_os0.6_r10_uniform;44,0;56,0;12,0
+n50_os0.6_r3_uniform;16,0;28,0;12,0
+n100_os0.6_r6_uniform;32,0;44,0;12,0
