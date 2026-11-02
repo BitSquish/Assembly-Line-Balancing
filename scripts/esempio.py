@@ -1,4 +1,4 @@
-"""Esempio delle slide: l'istanza da 10 task usata per sviluppare l'euristica.
+"""Figure di esempio delle slide: istanza da 10 task e order strength
 
 Uso:
     python -m scripts.esempio --out results/esempio/
@@ -7,6 +7,8 @@ Esegue i quattro metodi sull'istanza (la stessa di tests/test_heuristic.py),
 stampa bound e soluzioni e salva due figure:
     esempio_grafo.png     grafo delle precedenze, task colorati per stazione
                           (soluzione di Hoffmann)
+    order_strength.png    grafi e matrice di raggiungibilità per OS 0,2, 0,6 e 0,9
+                          (generatore, 10 task, seed 1)
 """
 
 from __future__ import annotations
@@ -20,11 +22,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from scripts.make_figures import INK, INK_MUTED, SURFACE
+from scripts.make_figures import GRID, INK, INK_MUTED, SURFACE
 from scripts.run_experiments import METHODS
 from src.bounds import lower_bound, simple_lower_bound, window_lower_bound
 from src.graph import PrecedenceGraph
 from src.instance import ALBInstance
+from matplotlib.patches import Rectangle
+from src.generator import generate
 
 # Task 1..10 nel testo, indici 0..9 nel codice.
 EXAMPLE = ALBInstance(
@@ -67,6 +71,78 @@ def draw_graph(inst: ALBInstance, stations: tuple[int, ...], path: Path) -> None
     print(f"  {path}")
 
 
+# Figura dell'order strength: tre istanze da 10 task del generatore, seed 1,
+# una per livello di OS del disegno sperimentale.
+OS_LEVELS = [(0.2, "sparso"), (0.6, "medio"), (0.9, "quasi una catena")]
+OS_SEED = 1
+NODE_COLOR, EDGE_COLOR = "#316cb3", "#6f6e69"
+
+
+def _layered_positions(graph: nx.DiGraph) -> dict[int, tuple[float, float]]:
+    """Colonna = livello del task (cammino più lungo da una sorgente), righe centrate."""
+    level: dict[int, int] = {}
+    for v in nx.topological_sort(graph):
+        level[v] = max((level[u] + 1 for u in graph.predecessors(v)), default=0)
+    columns: dict[int, list[int]] = {}
+    for v, lv in level.items():
+        columns.setdefault(lv, []).append(v)
+    return {v: (lv, -(i - (len(vs) - 1) / 2))
+            for lv, vs in columns.items() for i, v in enumerate(sorted(vs))}
+
+
+def draw_order_strength(path: Path, n: int = 10) -> None:
+    """Sopra: grafo delle precedenze (solo archi diretti) per OS 0,2, 0,6 e 0,9.
+
+    Sotto: matrice di raggiungibilità (chiusura transitiva), un quadrato per
+    coppia di task, blu se l'ordine è fissato. OS = quadrati blu / (n(n-1)/2).
+    """
+    total = n * (n - 1) // 2
+    fig, axes = plt.subplots(2, 3, figsize=(13, 8.2), gridspec_kw={"height_ratios": [1, 1.05]})
+    fig.patch.set_facecolor(SURFACE)
+    for k, (os_target, label) in enumerate(OS_LEVELS):
+        inst = generate(n, 2, os_target, seed=OS_SEED)      # m non conta per il grafo
+        g = nx.DiGraph()
+        g.add_nodes_from(range(n))
+        g.add_edges_from(inst.precedences)
+        reduced, closure = nx.transitive_reduction(g), nx.transitive_closure_dag(g)
+
+        ax = axes[0, k]
+        pos = _layered_positions(reduced)
+        nx.draw_networkx_edges(reduced, pos, ax=ax, edge_color=EDGE_COLOR, arrowsize=12,
+                               node_size=520, width=1.2)
+        nx.draw_networkx_nodes(reduced, pos, ax=ax, node_size=520, node_color=NODE_COLOR, linewidths=0)
+        nx.draw_networkx_labels(reduced, pos, ax=ax, labels={v: v + 1 for v in reduced},
+                                font_color="white", font_size=9)
+        os_value = f"{inst.meta['order_strength']:.2f}".replace(".", ",")
+        ax.set_title(f"OS = {os_value}  ({label})", fontsize=14, color=INK, fontweight="bold")   # ← INK
+        ax.axis("off")
+        ax.margins(0.12)
+
+        ax = axes[1, k]
+        ordered = 0
+        for i in range(n):
+            for j in range(i + 1, n):
+                on = closure.has_edge(i, j) or closure.has_edge(j, i)
+                ordered += on
+                ax.add_patch(Rectangle((j - 1, n - 2 - i), 0.9, 0.9, color=NODE_COLOR if on else GRID))
+        for i in range(n - 1):
+            ax.text(-0.4, n - 2 - i + 0.45, str(i + 1), ha="right", va="center", fontsize=8, color=INK_MUTED)
+            ax.text(i + 0.45, n - 1 + 0.2, str(i + 2), ha="center", va="bottom", fontsize=8, color=INK_MUTED)
+        ax.set_xlim(-1.2, n - 0.8)
+        ax.set_ylim(-0.6, n)
+        ax.set_aspect("equal")
+        ax.axis("off")
+        ax.text((n - 2) / 2, -0.5, f"{ordered} coppie ordinate su {total}", ha="center", va="top",
+                fontsize=12, color=INK, fontweight="bold")                                      # ← INK
+    fig.text(0.5, 0.505, "Ogni quadrato è una coppia di task: blu se le precedenze ne fissano l'ordine "
+             f"(anche indirettamente), grigio se l'ordine è libero.  OS = quadrati blu / {total}",
+             ha="center", fontsize=10.5, color=INK_MUTED)
+    fig.tight_layout(h_pad=5)
+    fig.savefig(path, dpi=200, facecolor=SURFACE)
+    plt.close(fig)
+    print(f"  {path}")
+
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -91,8 +167,7 @@ def main() -> None:
 
     best = results["hoffmann"]
     draw_graph(inst, best.solution.stations, args.out / "esempio_grafo.png")
-    draw_loads(inst, best.solution.stations, best.lower_bound, args.out / "esempio_carichi.png")
-
+    draw_order_strength(args.out / "order_strength.png")
 
 
 if __name__ == "__main__":
