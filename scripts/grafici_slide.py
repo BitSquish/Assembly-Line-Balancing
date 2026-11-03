@@ -106,6 +106,17 @@ def main() -> None:
     save(wide(inst.groupby(["time_dist", "os_target"])["chiusa_pli"].mean() * 100, "OS"),
          a.out, "chiusura_per_os.csv")
 
+    # Sensibilità al tempo limite: istanze chiuse da almeno un PLI se il limite
+    # fosse stato T secondi (tempo del solver, senza costruzione del modello).
+    solve_s = pli["time_s"] - pli["build_s"]
+    rows = {}
+    for limit in (60, 90, 120, 150, 180):
+        ok = pli[pli["ottimo"] & (solve_s <= limit)].drop_duplicates("instance")
+        rows[f"{limit} s"] = ok.groupby("time_dist").size()
+    t = pd.DataFrame(rows).loc[list(DIST)].rename(index=DIST)
+    t.index.name = "Tempi"
+    save(t, a.out, "chiusura_per_tempo_limite.csv", decimals=0)
+
     # Slide "PA vs RC": ottimi dimostrati per OS (su 300 istanze)
     t = pli.groupby(["os_target", "time_dist", "method"])["ottimo"].sum().unstack(["time_dist", "method"])
     t = t[[("uniform", PLI[0]), ("uniform", PLI[1]), ("bimodal", PLI[0]), ("bimodal", PLI[1])]]
