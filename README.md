@@ -19,6 +19,41 @@ In breve:
 - nessuno dei due PLI domina l'altro: Ritt & Costa dimostra più ottimi con
   precedenze dense, Patterson & Albracht è competitivo con precedenze sparse.
 
+
+## Indice
+
+- [Il problema](#il-problema)
+- [Metodi](#metodi)
+  - [Lower bound](#lower-bound-srcboundspy)
+  - [Upper bound iniziale](#upper-bound-iniziale)
+  - [Modelli PLI](#modelli-pli-srcmodels)
+  - [Euristiche](#euristiche-srcheuristic)
+- [Istanze](#istanze)
+- [Installazione](#installazione)
+- [Uso](#uso)
+  - [Menù](#menù)
+  - [Comandi diretti](#comandi-diretti)
+- [Esperimenti](#esperimenti)
+  - [Colonne dei risultati](#colonne-dei-risultati)
+- [Risultati](#risultati)
+  - [Definizioni](#definizioni)
+  - [Riepilogo per metodo](#riepilogo-per-metodo)
+  - [Dimensione delle istanze](#dimensione-delle-istanze)
+  - [Cosa rende difficile un'istanza](#cosa-rende-difficile-unistanza)
+  - [Più tempo non basta](#più-tempo-non-basta)
+  - [Patterson & Albracht contro Ritt & Costa](#patterson--albracht-contro-ritt--costa)
+  - [Hoffmann contro i PLI](#hoffmann-contro-i-pli)
+  - [Hoffmann contro Gruppi](#hoffmann-contro-gruppi)
+  - [Istanze aperte e lower bound](#istanze-aperte-e-lower-bound)
+  - [Tempi uniformi e bimodali](#tempi-uniformi-e-bimodali)
+  - [Figure e tabelle](#figure-e-tabelle)
+- [Storia della campagna](#storia-della-campagna)
+- [Verifiche della correttezza](#verifiche-della-correttezza)
+- [Limiti](#limiti)
+- [Perché Gurobi](#perché-gurobi)
+- [Struttura](#struttura)
+- [Riferimenti](#riferimenti)
+
 ## Il problema
 
 Una linea di montaggio ha $`m`$ **stazioni in sequenza**. Ogni task $`i`$ ha un
