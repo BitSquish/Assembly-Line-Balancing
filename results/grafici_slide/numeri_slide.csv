@@ -1,0 +1,16 @@
+Numero;Valore
+Hoffmann dimostra da solo l'ottimo, nessun PLI chiude (uniforme);90
+Hoffmann dimostra da solo l'ottimo, nessun PLI chiude (bimodale);20
+Hoffmann dimostra da solo l'ottimo, nessun PLI chiude (totale);110
+Hoffmann raggiunge il miglior LB, nessun PLI chiude (totale);111
+Hoffmann migliore di Gruppi (istanze);1504
+Gruppi migliore di Hoffmann (istanze);4
+Wilcoxon Hoffmann contro Gruppi, tutte le istanze (p);7,0e-248
+Esecuzioni di Hoffmann in cui scatta il limite di nodi;1
+Istanze in cui scatta il limite di nodi;n200_os0.2_r10_bimodal_22
+Fase 1 del bound alza il valore (uniforme);68
+Fase 1 del bound alza il valore (bimodale);71
+Fase 1 del bound alza il valore, di cui a OS 0,9;137
+Fase 2 del bound alza il valore (uniforme);60
+Fase 2 del bound alza il valore (bimodale);53
+Fase 2 del bound alza il valore, di cui a OS 0,9;113

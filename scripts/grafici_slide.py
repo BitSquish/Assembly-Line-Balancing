@@ -80,10 +80,90 @@ def save(table: pd.DataFrame, out: Path, name: str, decimals: int = 1) -> None:
     print(f"\n{name}\n{table.round(decimals).to_string()}")
 
 
+METODI = {"patterson_albracht": "PA", "ritt_costa": "RC", "hoffmann": "Hoffmann", "gruppi": "Gruppi"}
+
+
+def ottimo_raggiunto(df: pd.DataFrame, inst: pd.DataFrame) -> pd.DataFrame:
+    """% di istanze in cui ogni metodo trova l'ottimo, su due insiemi di istanze.
+
+    Sulle istanze con ottimo noto rientrano anche quelle chiuse solo da Hoffmann,
+    dove i PLI per costruzione non hanno trovato l'ottimo: il confronto alla pari
+    tra PLI ed euristiche è sulle istanze chiuse dai PLI.
+    """
+    obj = df.pivot(index="instance", columns="method", values="objective")
+    rows = {}
+    for dist, label in DIST.items():
+        s = inst[inst["time_dist"] == dist]
+        found = obj.loc[s.index, list(METODI)].eq(s["best_ub"], axis=0)
+        rows[f"{label}, chiuse dai PLI ({int(s['chiusa_pli'].sum())})"] = found[s["chiusa_pli"]].mean() * 100
+        rows[f"{label}, ottimo noto ({int(s['noto'].sum())})"] = found[s["noto"]].mean() * 100
+    t = pd.DataFrame(rows).T.rename(columns=METODI)
+    t.index.name = "Istanze"
+    return t
+
+
+def numeri_slide(df: pd.DataFrame, inst: pd.DataFrame, manifest: Path) -> pd.DataFrame:
+    """Numeri citati nel testo delle slide e del README, uno per riga."""
+    from scipy.stats import wilcoxon
+
+    num: dict[str, object] = {}
+    st = df.pivot(index="instance", columns="method", values="status")
+
+    # Hoffmann sulle istanze che nessun PLI chiude
+    aperte_pli = ~inst["chiusa_pli"]
+    solo_h = aperte_pli & (st["hoffmann"] == "optimal")
+    for dist, label in DIST.items():
+        num[f"Hoffmann dimostra da solo l'ottimo, nessun PLI chiude ({label.lower()})"] = \
+            int(solo_h[inst["time_dist"] == dist].sum())
+    num["Hoffmann dimostra da solo l'ottimo, nessun PLI chiude (totale)"] = int(solo_h.sum())
+    num["Hoffmann raggiunge il miglior LB, nessun PLI chiude (totale)"] = \
+        int((aperte_pli & (inst["hoffmann"] == inst["best_lb"])).sum())
+
+    # Hoffmann contro Gruppi su tutte le istanze
+    num["Hoffmann migliore di Gruppi (istanze)"] = int((inst["hoffmann"] < inst["gruppi"]).sum())
+    num["Gruppi migliore di Hoffmann (istanze)"] = int((inst["gruppi"] < inst["hoffmann"]).sum())
+    p = wilcoxon(inst["hoffmann"], inst["gruppi"]).pvalue
+    num["Wilcoxon Hoffmann contro Gruppi, tutte le istanze (p)"] = f"{p:.1e}".replace(".", ",")
+
+    # Limite di nodi di Hoffmann
+    extra = df[df["method"] == "hoffmann"].set_index("instance")["extra"].map(json.loads)
+    hits = extra.map(lambda e: e.get("node_limit_hits_total", 0))
+    num["Esecuzioni di Hoffmann in cui scatta il limite di nodi"] = int((hits > 0).sum())
+    num["Istanze in cui scatta il limite di nodi"] = ", ".join(hits[hits > 0].index) or "nessuna"
+
+    # Fasi del lower bound: in quante istanze ciascuna alza il valore della precedente.
+    # Si ricalcolano dalle istanze (circa un minuto): il CSV dei risultati riporta solo il bound finale.
+    if manifest.exists():
+        from src.bounds import lower_bound, simple_lower_bound, window_lower_bound
+        from src.graph import PrecedenceGraph
+        from src.instance import ALBInstance
+
+        rows = []
+        for r in pd.read_csv(manifest).itertuples():
+            ist = ALBInstance.load(r.path, name=r.instance)
+            g = PrecedenceGraph(ist)
+            s, w, lb = simple_lower_bound(ist), window_lower_bound(ist, g), lower_bound(ist, g)
+            rows.append((r.time_dist, r.os_target, w > s, lb > w))
+        b = pd.DataFrame(rows, columns=["time_dist", "os", "fase1", "fase2"])
+        for fase in ("fase1", "fase2"):
+            n = fase[-1]
+            for dist, label in DIST.items():
+                num[f"Fase {n} del bound alza il valore ({label.lower()})"] = \
+                    int(b.loc[b["time_dist"] == dist, fase].sum())
+            num[f"Fase {n} del bound alza il valore, di cui a OS 0,9"] = int(b.loc[b["os"] == 0.9, fase].sum())
+    else:
+        print(f"  {manifest} non trovato: conteggi delle fasi del bound saltati")
+
+    t = pd.DataFrame({"Valore": num})
+    t.index.name = "Numero"
+    return t
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--results", type=Path, default=Path("results/results.csv"))
     p.add_argument("--out", type=Path, default=Path("results/grafici_slide"))
+    p.add_argument("--manifest", type=Path, default=Path("instances/manifest.csv"),
+                   help="istanze, per contare in quante istanze ogni fase del bound lo alza")    
     a = p.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
     df = load(a.results)
@@ -181,6 +261,11 @@ def main() -> None:
     })
     save(by_group(t), a.out, "bound_debole.csv")
 
+    # Slide "Panoramica": ottimo raggiunto sulle istanze chiuse dai PLI e con ottimo noto
+    save(ottimo_raggiunto(df, inst), a.out, "ottimo_raggiunto.csv")
+
+    # Numeri citati nel testo di slide e README
+    save(numeri_slide(df, inst, a.manifest), a.out, "numeri_slide.csv")
 
 if __name__ == "__main__":
     main()

@@ -114,7 +114,7 @@ def draw_order_strength(path: Path, n: int = 10) -> None:
         nx.draw_networkx_labels(reduced, pos, ax=ax, labels={v: v + 1 for v in reduced},
                                 font_color="white", font_size=9)
         os_value = f"{inst.meta['order_strength']:.2f}".replace(".", ",")
-        ax.set_title(f"OS = {os_value}  ({label})", fontsize=14, color=INK, fontweight="bold")   # ← INK
+        ax.set_title(f"OS = {os_value}  ({label})", fontsize=14, color=INK, fontweight="bold")   
         ax.axis("off")
         ax.margins(0.12)
 
@@ -133,7 +133,7 @@ def draw_order_strength(path: Path, n: int = 10) -> None:
         ax.set_aspect("equal")
         ax.axis("off")
         ax.text((n - 2) / 2, -0.5, f"{ordered} coppie ordinate su {total}", ha="center", va="top",
-                fontsize=12, color=INK, fontweight="bold")                                      # ← INK
+                fontsize=12, color=INK, fontweight="bold")                                      
     fig.text(0.5, 0.505, "Ogni quadrato è una coppia di task: blu se le precedenze ne fissano l'ordine "
              f"(anche indirettamente), grigio se l'ordine è libero.  OS = quadrati blu / {total}",
              ha="center", fontsize=10.5, color=INK_MUTED)

@@ -95,8 +95,6 @@ def build_groups(graph: PrecedenceGraph) -> Groups:
     while remaining:
         roots = sorted((i for i in remaining if ready(i)), key=lambda i: (-weight[i], i))
         for root in roots:
-            if group_of[root] >= 0:           # preso come figlio in questa ondata
-                continue
             g = len(groups)
             members = [root]
             group_of[root] = g

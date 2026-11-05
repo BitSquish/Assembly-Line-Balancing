@@ -95,7 +95,7 @@ PARAMETERS = [
     ("order_strength", "Densità delle precedenze (order strength)",
      "Frazione delle coppie di task il cui ordine è imposto dalle precedenze:\n"
      "  0 = nessuna precedenza, 1 = task in un'unica catena.",
-     [(0.2, "0.2 (grafo sparso)"), (0.6, "0.6 (grafo denso)"), (0.9, "0.9 (quasi una catena)")],
+     [(0.2, "0.2 (grafo sparso)"), (0.6, "0.6 (grafo medio)"), (0.9, "0.9 (grafo denso, quasi una catena)")],     
      lambda v: float(v.replace(",", ".")) if 0 <= float(v.replace(",", ".")) <= 0.95 else None),
     ("tasks_per_station", "Numero di stazioni",
      "Scelto in proporzione ai task: m = n / 3, n / 6 oppure n / 10. Come distribuire\n"

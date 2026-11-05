@@ -402,7 +402,7 @@ def plot_distributions(df: pd.DataFrame, path: str | Path) -> None:
                              gridspec_kw={"width_ratios": [1, 1, 1.35]})
     width = 0.38
     for ax, series, label, fmt in (
-        (axes[0], closed, "Istanze chiuse (%)", lambda v: f"{v:.0f}"),
+        (axes[0], closed, "Istanze con ottimo noto (%)", lambda v: f"{v:.0f}"),
         (axes[1], pli_time, "Tempo medio dei PLI (s)", lambda v: f"{v:.0f}" if v >= 1 else _fmt(round(v, 2))),
     ):
         for k, dist in enumerate(dists):

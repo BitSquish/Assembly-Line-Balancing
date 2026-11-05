@@ -15,13 +15,14 @@ ogni stazione ha carico <= c, ogni task i sta in [E_i(c), L_i(c)].
 E_i è non crescente in c e L_i non decrescente: a c più grande, finestre
 più larghe.
 
-Lower bound usato da tutti i metodi (lower_bound), in tre passi:
-    1. simple_lower_bound: LC1 e LC2;
-    2. window_lower_bound: LC3 con teste e code semplici;
-    3. lower_bound: LC3 con teste e code ricorsive (cycle_time_excluded).
-La campagna è stata eseguita prima con il bound del passo 2. Dopo l'analisi dei
-risultati si è aggiunto il passo 3 e si sono rieseguite le esecuzioni
-interessate (scripts/rerun_bound.py).
+Lower bound usato da tutti i metodi (lower_bound):
+    valore di partenza  simple_lower_bound: LC1 e LC2;
+    fase 1              window_lower_bound: LC3 con teste e code semplici;
+    fase 2              lower_bound: LC3 con teste e code ricorsive
+                        (cycle_time_excluded).
+La campagna sulle istanze uniformi è stata eseguita prima con il bound della
+fase 1. Dopo l'analisi dei risultati si è aggiunta la fase 2 e si sono
+rieseguite le esecuzioni interessate (scripts/rerun_bound.py).
 """
 
 from __future__ import annotations
