@@ -19,11 +19,9 @@ _TAG = re.compile(r"^<(.+)>$")
 def _parse_sections(text: str) -> dict[str, list[str]]:
     """Spezza un file .alb in sezioni: nome del tag -> righe che lo seguono.
 
-    È volutamente tollerante: un tag che non conosciamo non genera errore, finisce
-    semplicemente nel dizionario e viene ignorato da chi legge. Serve perché i file
-    di letteratura contengono blocchi che a noi non interessano (<order strength>,
-    <number of stations per task>, ...) e un parser rigido non aprirebbe metà
-    delle istanze pubbliche.
+    I tag sconosciuti finiscono nel dizionario e vengono ignorati: i file di
+    letteratura contengono blocchi che qui non servono (<order strength>,
+    <number of stations per task>, ...).
     """
     sections: dict[str, list[str]] = {}
     current: str | None = None
@@ -45,24 +43,18 @@ def _parse_sections(text: str) -> dict[str, list[str]]:
 class ALBInstance:
     """Una singola istanza del problema.
 
-    frozen=True: durante una campagna di centinaia di istanze
-    un modello che modifica i dati falserebbe tutti i run successivi senza
-    lasciare traccia. Così fallisce subito.
-
-    slots=True elimina il __dict__ per istanza.
-
-    repr=False perché il repr automatico stamperebbe mille tempi: inutilizzabile
-    nel debugger e nei messaggi di errore. Si definisce uno compatto più sotto.
+    Immutabile (frozen): la stessa istanza viene passata a tutti i metodi e
+    nessuno deve poterla modificare. Il repr è ridefinito più sotto in forma
+    compatta.
 
     Attributi:
         name:         identificativo, di norma il nome del file senza estensione.
         task_times:   tempo di ogni operazione, indicizzato 0-based.
         precedences:  archi diretti (i, j), "i su una stazione di indice <= quella di j".
         m_stations:   numero di stazioni. Dato di input nel SALBP-2.
-        cycle_time:   NON è l'obiettivo del SALBP-2. È il tempo ciclo letto dai
-                        file benchmark SALBP-1, dove è un dato. Nel nostro problema
-                        il tempo ciclo è il carico massimo di stazione, e si trova
-                        in Solution. None se il file non lo riporta.
+        cycle_time:   tempo ciclo letto dai file benchmark del SALBP-1, dove è un
+                      dato. Nel SALBP-2 il tempo ciclo è il carico massimo di
+                      stazione e si trova in Solution. None se il file non lo riporta.
         meta:         parametri del generatore (seed, order strength, distribuzione).
     """
 
@@ -72,20 +64,15 @@ class ALBInstance:
     m_stations: int
     cycle_time: int | None = None
 
-    # compare=False: il campo meta descrive COME l'istanza è stata prodotta, non
-    # QUALE problema rappresenta. Senza questo, il test di round trip fallirebbe
-    # sempre, perché load() aggiunge il percorso del file di provenienza.
+    # meta non entra nel confronto tra istanze: load() vi aggiunge il percorso
+    # del file, e due istanze uguali lette da file diversi risulterebbero diverse.
     meta: dict = field(default_factory=dict, compare=False)
 
     # ------------------------------------------------------------------ derivati
 
     @property
     def n_tasks(self) -> int:
-        """Numero di operazioni.
-
-        Derivato e mai memorizzato: un campo n_tasks separato prima o poi si
-        desincronizza da task_times, e il bug che ne segue è invisibile.
-        """
+        """Numero di operazioni, ricavato da task_times."""
         return len(self.task_times)
 
     @property
@@ -107,15 +94,12 @@ class ALBInstance:
         topologico, quindi appartiene a PrecedenceGraph, che lo calcola una volta
         sola e lo riusa.
         """
-        # object.__setattr__ è l'unico modo di scrivere su una dataclass frozen.
-        # È legittimo farlo qui, durante la costruzione, e soltanto qui: serve ad
-        # accettare liste in ingresso e memorizzare comunque tuple, così l'istanza
-        # è hashable e confrontabile senza che il chiamante debba pensarci.
+        # La dataclass è frozen: in costruzione si scrive con object.__setattr__.
+        # Si salvano tuple anche se in ingresso arrivano liste.
         object.__setattr__(self, "task_times", tuple(int(t) for t in self.task_times))
 
-        # dict.fromkeys deduplica preservando l'ordine. I file di benchmark ogni
-        # tanto ripetono un arco, e ogni duplicato è una riga di vincolo sprecata
-        # nel modello PLI: su |E|*m righe del modello 2 non è un dettaglio.
+        # Archi duplicati rimossi mantenendo l'ordine: nei modelli PLI
+        # diventerebbero vincoli ripetuti.
         deduped = dict.fromkeys((int(u), int(v)) for u, v in self.precedences)
         object.__setattr__(self, "precedences", tuple(deduped))
 
@@ -142,7 +126,7 @@ class ALBInstance:
                 raise ValueError(f"{self.name}: cappio sull'operazione {u}")
 
     def __repr__(self) -> str:
-        """Compatto di proposito: è quello che vedi nei messaggi di errore."""
+        """Versione compatta, usata nei messaggi di errore."""
         return (
             f"ALBInstance({self.name!r}, n={self.n_tasks}, m={self.m_stations}, "
             f"|E|={self.n_precedences}, sum_t={self.total_time})"
@@ -197,9 +181,8 @@ class ALBInstance:
 
         Args:
             m_stations: forza il numero di stazioni ignorando quello nel file.
-                Serve per i benchmark SALBP-1, che il numero di stazioni non ce
-                l'hanno, e per risolvere la stessa istanza con m diversi — che è
-                uno dei fattori del disegno sperimentale.
+                Serve per i benchmark SALBP-1, che non riportano il numero di
+                stazioni, e per risolvere la stessa istanza con m diversi.
             name: sovrascrive il nome, che di default è il nome del file.
         """
         p = Path(path)

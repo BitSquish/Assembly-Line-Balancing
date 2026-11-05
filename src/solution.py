@@ -18,8 +18,8 @@ class Solution:
 
     stations[i] = stazione (1..m) a cui è assegnato il task i.
     Carichi e carico massimo si calcolano una volta sola alla costruzione.
-    La soluzione NON viene validata qui: una soluzione non ammissibile deve
-    poter esistere, altrimenti il validatore non avrebbe niente da rifiutare.
+    La soluzione non viene validata qui: lo fa violations(), che deve poter
+    ricevere anche soluzioni non ammissibili.
     """
 
     instance: ALBInstance
@@ -87,7 +87,7 @@ class Status(Enum):
 class SolveResult:
     """Una riga dei risultati: un metodo su un'istanza.
 
-    È il formato comune per i due PLI e per l'euristica, così la campagna
+    È il formato comune per i due PLI e le due euristiche, così la campagna
     di esperimenti li tratta tutti allo stesso modo.
     """
 

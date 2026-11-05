@@ -6,8 +6,7 @@ ciclo renderebbe l'istanza inammissibile in partenza. ALBInstance non lo
 verifica: la verifica richiede comunque di calcolare un ordinamento topologico, 
 quindi la si fa una volta sola qui e la si riusa.
 
-Le operazioni esposte da questa classe sono tutte ricorrenti in letteratura
-e servono a valle di questo modulo:
+Cosa calcola e dove serve:
     - chiusura transitiva  -> finestre di stazione E_i, L_i e lower bound
       (bounds.py);
     - riduzione transitiva -> elimina archi ridondanti nei vincoli di
@@ -31,17 +30,9 @@ from .instance import ALBInstance
 @dataclass(frozen=True, slots=True, repr=False)
 class PrecedenceGraph:
     """Vista precomputata sulle precedenze di una ALBInstance.
-
-    frozen=True e slots=True per lo stesso motivo di ALBInstance: è un
-    oggetto derivato, riusato su tutta una campagna di esperimenti, e non
-    deve poter essere modificato per errore.
-
-    Nota implementativa: slots=True elimina il __dict__ dell'istanza, quindi
-    functools.cached_property (che richiede __dict__ per memorizzare il
-    valore) non è utilizzabile qui. Per questo chiusura, riduzione e
-    ordinamento topologico sono calcolati tutti una volta sola in
-    __post_init__, con lo stesso spirito della deduplica fatta in
-    ALBInstance.__post_init__, invece che lazy alla prima richiesta.
+    Immutabile come ALBInstance. Chiusura, riduzione e ordinamento topologico
+    si calcolano una volta sola in __post_init__ (con slots=True non si può
+    usare functools.cached_property).
     """
 
     instance: ALBInstance
@@ -113,7 +104,6 @@ class PrecedenceGraph:
         Un arco (i, j) è ridondante se esiste già un cammino i -> ... -> j di
         lunghezza >= 2: rimuoverlo non cambia l'ordine parziale rappresentato,
         ma nei modelli PLI toglie una riga di vincolo per ogni arco ridondante
-        (si veda instance.py: lo stesso principio applicato alla deduplica).
         """
         return self._reduction
 
@@ -122,8 +112,7 @@ class PrecedenceGraph:
     @property
     def topological_order(self) -> tuple[int, ...]:
         """Un ordinamento topologico valido (ne esiste sempre almeno uno, essendo
-        il grafo aciclico). Usato dalle procedure costruttive dell'euristica e
-        dal calcolo dei bound di stazione."""
+        il grafo aciclico). Usato dalle euristiche e dal calcolo dei bound."""
         return self._topological_order
 
     @property
@@ -131,8 +120,8 @@ class PrecedenceGraph:
         """OS = |E*| / (n(n-1)/2): frazione delle coppie ordinate di task il
         cui ordine relativo è fissato dalle precedenze, dirette o indirette.
 
-        Definizione standard in letteratura ALBP (usata per classificare le
-        istanze e riportata nel tag <order strength> dei file .alb di benchmark).
+        È la misura usata in letteratura per classificare le istanze (tag
+        <order strength> dei file .alb).
         """
         n = self.instance.n_tasks
         max_pairs = n * (n - 1) // 2
