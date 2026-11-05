@@ -350,7 +350,7 @@ python -m src.main
 | Voce | Cosa fa |
 | --- | --- |
 | 1 | campagna completa di `configs/design.json`; si può interrompere e riprendere |
-| 2 | demo rapida: tre istanze da 50 task e una da 200, tutti i metodi, 15 secondi per PLI |
+| 2 | demo rapida: sei istanze da 20 a 200 task, con tempi uniformi e bimodali, tutti i metodi, 15 secondi per PLI (al massimo 3 minuti) |
 | 3 | personalizzato: metodi, limite di tempo e parametri delle istanze a scelta |
 | 4 | tabella riassuntiva di un file di risultati |
 | 5 | grafici e tabelle da un file di risultati |

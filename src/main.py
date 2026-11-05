@@ -4,8 +4,8 @@ Uso (dalla cartella del progetto):
     python -m src.main
 
     1) Tutti gli esperimenti: la campagna completa definita in configs/design.json.
-    2) Demo rapida: tre istanze da 50 task e una da 200, tutti i metodi,
-        15 secondi per ogni PLI (al massimo circa due minuti).
+    2) Demo rapida: sei istanze da 20 a 200 task, con tempi uniformi e
+        bimodali, tutti i metodi, 15 secondi per ogni PLI (al massimo 3 minuti).
     3) Personalizzato: metodi, limite di tempo e parametri delle istanze a scelta.
     4) Vedi risultati: tabella riassuntiva di un file di risultati già prodotto.
     5) Genera grafici e tabelle da un file di risultati.
@@ -61,14 +61,18 @@ CAMPAIGN_TIME_LIMIT = 180.0          # secondi per ogni PLI nella campagna
 
 DEMO_TIME_LIMIT = 15.0
 DEMO_GROUPS = [
-    ("facile: poche precedenze, stazioni medie",
-     {"n": 50, "order_strength": 0.2, "tasks_per_station": 6, "time_dist": "uniform"}),
-    ("molte precedenze, tante stazioni",
-     {"n": 50, "order_strength": 0.9, "tasks_per_station": 3, "time_dist": "uniform"}),
-    ("difficile: poche precedenze, tante stazioni",
+    ("piccola: i PLI dimostrano l'ottimo, le euristiche no",
+     {"n": 20, "order_strength": 0.2, "tasks_per_station": 3, "time_dist": "uniform"}),
+    ("tante stazioni: nessun metodo chiude",
      {"n": 50, "order_strength": 0.2, "tasks_per_station": 3, "time_dist": "uniform"}),
-    ("grande: 200 task, l'euristica supera i PLI",
+    ("precedenze dense: Ritt & Costa chiude, Patterson & Albracht no",
+     {"n": 100, "order_strength": 0.9, "tasks_per_station": 6, "time_dist": "uniform"}),
+    ("tempi bimodali: il bound è il task più lungo",
+     {"n": 100, "order_strength": 0.6, "tasks_per_station": 3, "time_dist": "bimodal"}),
+    ("grande: Hoffmann dimostra l'ottimo, i PLI no",
      {"n": 200, "order_strength": 0.2, "tasks_per_station": 6, "time_dist": "uniform"}),
+    ("tempi bimodali: i PLI chiudono anche a 200 task",
+     {"n": 200, "order_strength": 0.2, "tasks_per_station": 10, "time_dist": "bimodal"}),
 ]
 
 BASE_SEED = 2026                     # lo stesso di configs/design.json
