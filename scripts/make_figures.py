@@ -464,7 +464,7 @@ def plot_distributions(df: pd.DataFrame, path: str | Path) -> None:
     handles = [plt.Rectangle((0, 0), 1, 1, color=DIST_COLORS[d]) for d in dists]
     fig.legend(handles, [f"tempi {DIST_LABELS[d]}" for d in dists], loc="upper left",
                bbox_to_anchor=(0.005, 0.95), ncol=len(dists), frameon=False, fontsize=8.5)
-    fig.suptitle("Tempi uniformi e bimodali: con i bimodali i PLI chiudono quasi tutto",
+    fig.suptitle("Tempi uniformi e bimodali: con i bimodali l'ottimo è noto quasi sempre",                 
                  x=0.01, ha="left", fontsize=11.5, color=INK)
     fig.patch.set_facecolor(SURFACE)
     for a in axes:
