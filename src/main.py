@@ -505,8 +505,9 @@ def custom() -> None:
 
 
 def pick_results() -> Path | None:
-    """Fa scegliere uno dei file CSV in results/ (il più recente per primo)."""
+    """Fa scegliere uno dei file CSV in results/: prima results.csv, poi gli altri dal più recente."""
     files = sorted(Path("results").glob("*.csv"), key=lambda p: p.stat().st_mtime, reverse=True)
+    files.sort(key=lambda p: p != CAMPAIGN_RESULTS)        # results.csv in cima, se c'è
     if not files:
         print(f"\n{Style.YELLOW}Nessun file di risultati in results/: esegui prima "
               f"la voce 1, 2 o 3.{Style.RESET}")
