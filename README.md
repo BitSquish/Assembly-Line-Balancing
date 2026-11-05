@@ -19,7 +19,6 @@ In breve:
 - nessuno dei due PLI domina l'altro: Ritt & Costa dimostra più ottimi con
   precedenze dense, Patterson & Albracht è competitivo con precedenze sparse.
 
-
 ## Indice
 
 - [Il problema](#il-problema)
@@ -96,10 +95,10 @@ almeno $`k+1`$ stanno nella stessa stazione, quindi
 c \;\ge\; \mathrm{LC2} = \max_{k \ge 1} \; \sum_{h=0}^{k} t_{k m + 1 - h}
 ```
 
-**Fase 1: LC3 con finestre semplici** (`window_lower_bound`; Patterson &
-Albracht, 1975; Ritt & Costa, 2018, sez. 2.2). Con tempo ciclo $`c`$, il task
-$`i`$ non può stare prima della stazione $`E_i(c)`$ né dopo la stazione
-$`L_i(c)`$:
+**Fase 1: LC3 con finestre semplici** (`window_lower_bound`; Scholl, 1999,
+p. 56; Patterson & Albracht, 1975; Ritt & Costa, 2018, sez. 2.2). Con tempo
+ciclo $`c`$, il task $`i`$ non può stare prima della stazione $`E_i(c)`$ né dopo
+la stazione $`L_i(c)`$:
 
 ```math
 E_i(c) = \left\lceil \frac{t_i + \sum_{h \in P_i} t_h}{c} \right\rceil
@@ -209,8 +208,10 @@ fuori dalla finestra del tempo ciclo scelto:
 ```
 
 Da Patterson & Albracht (1975) vengono il vincolo di precedenza e le finestre di
-stazione, che non dipendono dal tipo di problema. Ritt & Costa (2018) dimostrano
-che la loro precedenza cumulata domina quella di Patterson & Albracht.
+stazione. Il loro articolo tratta il SALBP-1 (minimo numero di stazioni con
+tempo ciclo dato), ma vincolo e finestre non dipendono dal tipo di problema.
+Ritt & Costa (2018, prop. 2) dimostrano che la loro precedenza cumulata domina
+quella di Patterson & Albracht.
 
 Il primo modello è il più compatto, il secondo ha il rilassamento lineare più
 forte. Entrambi usano le stesse finestre di stazione, gli stessi bound e la
@@ -261,9 +262,11 @@ La saturazione delle stazioni è nata nello sviluppo del progetto come evoluzion
 dell'euristica dei gruppi: portando all'estremo la regola "lasciare il minimo
 spazio vuoto", i gruppi diventano superflui. Una verifica sulla letteratura ha
 mostrato che il criterio coincide con quello di Hoffmann (1963), pensato per il
-SALBP-1 e con enumerazione completa degli insiemi. La versione del progetto
-aggiunge la ricerca sul tempo ciclo e un limite di 20.000 nodi per stazione.
-Nella campagna il limite è scattato una sola volta, su
+SALBP-1: per ogni stazione si enumerano tutti gli assegnamenti possibili e si
+tiene quello con il minimo tempo inutilizzato, senza più tornarci sopra
+(Álvarez-Miranda et al., 2023, sez. 4; Scholl & Becker, 2006, sez. 5.1.2). La
+versione del progetto aggiunge la ricerca sul tempo ciclo e un limite di 20.000
+nodi per stazione. Nella campagna il limite è scattato una sola volta, su
 `n200_os0.2_r10_bimodal_22`, e la soluzione è comunque ottima (302 = lower
 bound).
 
@@ -300,19 +303,20 @@ Da dove vengono le scelte:
 - $`n`$ = 20, 50, 100, i livelli di OS e le 25 istanze per gruppo seguono
   Otto, Otto & Scholl (2013).
 - $`n`$ = 200 è una scelta del progetto (Otto et al. arrivano a 1000 task).
-  Álvarez-Miranda et al. (2023) osservano che i metodi esatti iniziano a
-  fallire intorno ai 100 task: con 200 task e tempi uniformi i PLI chiudono il
-  27% delle istanze (con tempi bimodali l'81%).
+  Álvarez-Miranda et al. (2023) osservano che i metodi esatti smettono di
+  risolvere la maggior parte delle istanze intorno ai 100 task: con 200 task e
+  tempi uniformi i PLI chiudono il 27% delle istanze (con tempi bimodali l'81%).
 - Il numero di stazioni in proporzione a $`n`$ è una scelta del progetto. Otto
   et al. controllano la difficoltà attraverso i tempi dei task rispetto al tempo
   ciclo; nel SALBP-2 il tempo ciclo non è un dato, e il numero di stazioni ne fa
   le veci. Álvarez-Miranda et al. (2023) usano lo stesso parametro (numero
   atteso di task per stazione) e mostrano che l'impacchettamento dei task è la
-  principale fonte di difficoltà: le istanze di Otto et al. ancora aperte hanno
-  tutte circa due task per stazione.
-- I tempi bimodali, con molti task brevi e pochi lunghi, riprendono la forma
-  considerata da Otto et al. (2013) come tipica delle linee reali. La proporzione
-  80/20 e gli intervalli sono una scelta del progetto.
+  principale fonte di difficoltà: le istanze più difficili hanno in media tra due
+  e tre task per stazione, e le istanze di Otto et al. ancora aperte ne hanno
+  circa due.
+- I tempi bimodali, con molti task brevi e pochi lunghi, sono la distribuzione di
+  default di SALBPGen (Otto et al., 2013), che la ottiene con due normali. La
+  proporzione 80/20 e gli intervalli uniformi sono una scelta del progetto.
 - Otto et al. distinguono anche grafi con molte catene o colli di bottiglia;
   il progetto usa un solo tipo di grafo, senza questo controllo.
 
@@ -373,9 +377,9 @@ python -m scripts.run_experiments --manifest instances/manifest.csv \
 python -m scripts.make_figures --results results/results.csv \
     --out results/figures_results/ --time-limit 180
 
-# tabelle dei grafici delle slide
+# tabelle dei grafici delle slide (ricalcola anche le fasi del bound dalle istanze)
 python -m scripts.grafici_slide --results results/results.csv \
-    --out results/grafici_slide/
+    --out results/grafici_slide/ --manifest instances/manifest.csv
 
 # istanza di esempio delle slide: bound, soluzioni e figure
 python -m scripts.esempio --out results/esempio/
@@ -653,7 +657,11 @@ con ottimo noto (vedi [Definizioni](#definizioni)).
 
 `results/grafici_slide/` (da `grafici_slide.py`) contiene le tabelle dei grafici
 delle slide, con la virgola decimale e il separatore ";". Qui "chiusa"
-significa chiusa dai PLI.
+significa chiusa dai PLI. Due file riassumono i numeri citati in questo README:
+`ottimo_raggiunto.csv` (ottimo raggiunto sulle istanze chiuse dai PLI e su
+quelle con ottimo noto) e `numeri_slide.csv` (istanze chiuse solo da Hoffmann,
+Hoffmann contro Gruppi, limite di nodi, istanze in cui ogni fase del bound alza
+il valore).
 
 ## Storia della campagna
 
